@@ -25,7 +25,7 @@ def generate_launch_description():
     )
 
     world_arg = DeclareLaunchArgument(
-        'world', default_value='new_home.sdf',
+        'world', default_value='home.sdf',
         description='Name of the Gazebo world file to load'
     )
 
@@ -106,9 +106,6 @@ def generate_launch_description():
             "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
             "/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model",
             "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V",
-            "/camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
-            "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
-            "/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan",
         ],
         output="screen",
         parameters=[
@@ -131,12 +128,6 @@ def generate_launch_description():
         ]
     )
 
-    trajectory_node = Node(
-        package='trajectory_server',
-        executable='trajectory_server',
-        name='trajectory_server'
-    )
-
     launchDescriptionObject = LaunchDescription()
 
     launchDescriptionObject.add_action(rviz_launch_arg)
@@ -152,6 +143,5 @@ def generate_launch_description():
     launchDescriptionObject.add_action(spawn_urdf_node)
     launchDescriptionObject.add_action(gz_bridge_node)
     launchDescriptionObject.add_action(robot_state_publisher_node)
-    launchDescriptionObject.add_action(trajectory_node)
 
     return launchDescriptionObject

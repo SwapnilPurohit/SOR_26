@@ -41,10 +41,9 @@
     <visual name='base_link_visual'>
       <origin xyz="0 0 0" rpy=" 0 0 0"/>
       <geometry>
-        <!-- <box size=".4 .2 .1"/> -->
-        <mesh filename = "package://erc_gazebo_sensors/meshes/IronMan_ROS_Body.dae"/>
+        <box size=".4 .2 .1"/>
       </geometry>
-      <!-- <material name="orange"/> -->
+        <material name="orange"/>
     </visual>
 
   </link>
@@ -80,10 +79,9 @@
     <visual name='front_left_wheel_visual'>
       <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
       <geometry>
-        <!-- <cylinder radius=".1" length=".05"/> -->
-        <mesh filename = "package://erc_gazebo_sensors/meshes/IronManWheelLeftFront.dae"/>
+        <cylinder radius=".1" length=".05"/>
       </geometry>
-      <!-- <material name="green"/> -->
+        <material name="green"/>
     </visual>
   </link>
 
@@ -117,10 +115,9 @@
     <visual name='rear_left_wheel_visual'>
       <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
       <geometry>
-        <!-- <cylinder radius=".1" length=".05"/> -->
-        <mesh filename = "package://erc_gazebo_sensors/meshes/IronManWheelRightFront.dae"/>
+        <cylinder radius=".1" length=".05"/>
       </geometry>
-      <!-- <material name="green"/> -->
+        <material name="green"/>
     </visual>
   </link>
 
@@ -154,10 +151,9 @@
     <visual name='front_right_wheel_visual'>
       <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
       <geometry>
-        <!-- <cylinder radius=".1" length=".05"/> -->
-        <mesh filename = "package://erc_gazebo_sensors/meshes/IronManWheelRightFront.dae"/>
+        <cylinder radius=".1" length=".05"/>
       </geometry>
-      <!-- <material name="green"/> -->
+        <material name="green"/>
     </visual>
   </link>
 
@@ -191,143 +187,10 @@
     <visual name='rear_right_wheel_visual'>
       <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
       <geometry>
-        <!-- <cylinder radius=".1" length=".05"/> -->
-        <mesh filename = "package://erc_gazebo_sensors/meshes/IronManWheelLeftFront.dae"/>
+        <cylinder radius=".1" length=".05"/>
       </geometry>
-      <!-- <material name="green"/> -->
+        <material name="green"/>
     </visual>
   </link>
 
-  <!-- STEP 6 - Gazebo frictions and colors -->
-  <gazebo reference="front_left_wheel">
-    <mu1>1.5</mu1>
-    <mu2>0.7</mu2>
-    <kp>200000.0</kp>
-    <kd>5000.0</kd>
-    <minDepth>0.002</minDepth>
-    <maxVel>0.3</maxVel>
-    <fdir1>0 1 0</fdir1>
-    <!-- <material>Gazebo/Green</material> -->
-  </gazebo>
-
-  <gazebo reference="front_right_wheel">
-    <mu1>1.5</mu1>
-    <mu2>0.7</mu2>
-    <kp>200000.0</kp>
-    <kd>5000.0</kd>
-    <minDepth>0.002</minDepth>
-    <maxVel>0.3</maxVel>
-    <fdir1>0 1 0</fdir1>
-    <!-- <material>Gazebo/Green</material> -->
-  </gazebo>
-
-  <gazebo reference="rear_left_wheel">
-    <mu1>1.5</mu1>
-    <mu2>0.7</mu2>
-    <kp>200000.0</kp>
-    <kd>5000.0</kd>
-    <minDepth>0.002</minDepth>
-    <maxVel>0.3</maxVel>
-    <fdir1>0 1 0</fdir1>
-    <!-- <material>Gazebo/Green</material> -->
-  </gazebo>
-
-  <gazebo reference="rear_right_wheel">
-    <mu1>1.5</mu1>
-    <mu2>0.7</mu2>
-    <kp>200000.0</kp>
-    <kd>5000.0</kd>
-    <minDepth>0.002</minDepth>
-    <maxVel>0.3</maxVel>
-    <fdir1>0 1 0</fdir1>
-    <!-- <material>Gazebo/Green</material> -->
-  </gazebo>
-
-  <gazebo reference="base_link">
-    <mu1>0.000002</mu1>
-    <mu2>0.000002</mu2>
-    <!-- <material>Gazebo/Red</material> -->
-  </gazebo>
-
-    <!-- STEP 7 - Camera -->
-  <joint type="fixed" name="camera_joint">
-    <origin xyz="0.225 0 0.075" rpy="0 0 0"/>
-    <child link="camera_link"/>
-    <parent link="base_link"/>
-    <axis xyz="0 1 0" />
-  </joint>
-
-  <link name='camera_link'>
-    <pose>0 0 0 0 0 0</pose>
-    <inertial>
-      <mass value="0.1"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <inertia
-          ixx="1e-6" ixy="0" ixz="0"
-          iyy="1e-6" iyz="0"
-          izz="1e-6"
-      />
-    </inertial>
-
-    <collision name='collision'>
-      <origin xyz="0 0 0" rpy="0 0 0"/> 
-      <geometry>
-        <box size=".03 .03 .03"/>
-      </geometry>
-    </collision>
-
-    <visual name='camera_link_visual'>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size=".03 .03 .03"/>
-      </geometry>
-    </visual>
-
-  </link>
-
-  <gazebo reference="camera_link">
-    <material>Gazebo/Red</material>
-  </gazebo>
-
-  <joint type="fixed" name="camera_optical_joint">
-    <origin xyz="0 0 0" rpy="-1.5707 0 -1.5707"/>
-    <child link="camera_link_optical"/>
-    <parent link="camera_link"/>
-  </joint>
-
-  <link name="camera_link_optical">
-  </link>
-
-   <!-- STEP 10 - Lidar -->
-  <joint type="fixed" name="scan_joint">
-    <origin xyz="0.0 0 0.15" rpy="0 0 0"/>
-    <child link="scan_link"/>
-    <parent link="base_link"/>
-    <axis xyz="0 1 0" rpy="0 0 0"/>
-  </joint>
-
-  <link name='scan_link'>
-    <inertial>
-      <mass value="1e-5"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <inertia
-          ixx="1e-6" ixy="0" ixz="0"
-          iyy="1e-6" iyz="0"
-          izz="1e-6"
-      />
-    </inertial>
-    <collision name='collision'>
-      <origin xyz="0 0 0" rpy="0 0 0"/> 
-      <geometry>
-        <box size=".1 .1 .1"/>
-      </geometry>
-    </collision>
-
-    <visual name='scan_link_visual'>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename = "package://erc_gazebo_sensors/meshes/lidar.dae"/>
-      </geometry>
-    </visual>
-  </link>
 </robot>

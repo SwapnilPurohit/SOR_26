@@ -261,9 +261,9 @@ ros2 run trajectory_server trajectory_server
 
 Now move around using the keyboard teleop node or Gazebo teleop GUI and visualize the robot's path in green coloured trajectory
 
-SENSORS
+# SENSORS
 
-Camera
+# Camera
 
 
 To add a camera - and every other sensors later - we have to change 2 files:

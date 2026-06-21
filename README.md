@@ -1,59 +1,62 @@
 [//]: # (Image References)
 
-[image1]: ./assets/starter-package.png "Starter package"
-[image2]: ./assets/camera-first-try.png "Adding a camera"
-[image3]: ./assets/camera.png "Adding a camera"
-[image4]: ./assets/compressed.png "Adding a camera"
-[image5]: ./assets/compressed-1.png "Adding a camera"
-[image6]: ./assets/rqt-reconfigure.png "rqt reconfigure"
-[image7]: ./assets/wide-angle.png "Wide angle camera"
-[image8]: ./assets/wide-angle-1.png "Wide angle camera"
-[image9]: ./assets/imu.png "IMU"
-[image10]: ./assets/tf-tree.png "TF Tree"
-[image11]: ./assets/odometry.png "Odometry"
-[image12]: ./assets/navsat.png "Navsat"
-[image13]: ./assets/new-york-madrid.png "New York - Madrid"
-[image14]: ./assets/rviz-gps.png "RViz GPS"
-[image15]: ./assets/rviz-gps-1.png "RViz GPS"
-[image16]: ./assets/lidar.png "Lidar"
-[image17]: ./assets/lidar-1.png "Lidar"
-[image18]: ./assets/lidar-2.png "Lidar"
-[image19]: ./assets/3d-lidar.png "Lidar"
-[image20]: ./assets/3d-lidar-1.png "Lidar"
-[image21]: ./assets/rgbd-camera.png "RGBD Camera"
-[image22]: ./assets/depth-cloud.png "RGBD Camera"
-[image23]: ./assets/depth-cloud-1.png "RGBD Camera"
-[image24]: ./assets/depth-image.png "Depth image"
-[image25]: ./assets/opencv.png "OpenCV"
-[image26]: ./assets/red-ball.png "Red ball in Gazebo"
-[image27]: ./assets/opencv-1.png "OpenCV"
-[image28]: ./assets/opencv-2.png "OpenCV"
+[image1]: ./assets/skid1.png "Starter package"
+[image2]: ./assets/skid2.png "Adding a camera"
+[image3]: ./assets/skid3.png "Adding a camera"
+[image4]: ./assets/odom1.jpg "Adding a camera"
+[image5]: ./assets/camera1.png "Adding a camera"
+[image6]: ./assets/cam_rqr.png "rqt reconfigure"
+[image7]: ./assets/compressed_rqt.png "Wide angle camera"
+[image8]: ./assets/relay_node_compressed.png "Wide angle camera"
+[image9]: ./assets/rqt_reconfigure.png "IMU"
+[image10]: ./assets/rgbd1.png "TF Tree"
+[image11]: ./assets/rgbd2.png "Odometry"
+[image12]: ./assets/depth-image.png "Navsat"
+[image13]: ./assets/lidar1.png "New York - Madrid"
+[image14]: ./assets/visualize_lidar.png "RViz GPS"
+[image15]: ./assets/lidar2.png "RViz GPS"
+[image16]: ./assets/3d_lidar.png "Lidar"
+[image17]: ./assets/3d_mapping.png "Lidar"
+[image18]: ./assets/mapping_rgbd.png "Lidar"
+[image19]: ./assets/ekf1.png "Lidar"
+[image20]: ./assets/imu1.png "Lidar"
+[image21]: ./assets/opencv1.png "RGBD Camera"
+[image22]: ./assets/opencv2.png "RGBD Camera"
+[image23]: ./assets/opencv3.png "RGBD Camera"
+[image24]: ./assets/opencv4.png "Depth image"
+[image25]: ./assets/yolo1.png "OpenCV"
+[image26]: ./assets/yolo2.png "Red ball in Gazebo"
 
 # Table of Contents
 1. [Introduction](#introduction)  
 1.1. [Download ROS package](#download-ros-package)  
-1.2. [Test the starter package](#test-the-starter-package)  
-2. [Camera](#camera)  
+1.2. [Test the starter package](#test-the-starter-package)
+2. [Skid-Steer](#skid-steer)
+3. [Friction](#friction)
+4. [Odometry](#odometry)
+5. [Sensors](#sensors)
+6. [Camera](#camera)  
 2.1. [Image transport](#image-transport)  
-2.2. [rqt reconfigure](#rqt-reconfigure)  
-2.3. [Wide angle camera](#wide-angle-camera) 
-3. [IMU](#imu)  
-3.1. [Sensor fusion with ekf](#sensor-fusion-with-ekf)  
-4. [GPS](#gps)  
-4.1. [Haversine formula](#haversine-formula)  
-4.2. [GPS waypoint following](#gps-waypoint-following) 
-5. [Lidar](#lidar)  
-5.1. [3D lidar](#3d-lidar) 
-6. [RGBD camera](#rgbd-camera)  
-7. [Image processing with OpenCV](#image-processing-with-opencv)
-   
-SKID-STEER
+2.2. [rqt reconfigure](#rqt-reconfigure)
+2.3. [RGBD camera](#rgbd-camera)  
+7. [Lidar](#lidar)
+3.1. [2D lidar](#2d-lidar)
+3.1. [3D lidar](#3d-lidar) 
+8. [IMU](#imu)  
+4.1. [Sensor fusion with ekf](#sensor-fusion-with-ekf)
+5. [Perception](#perception)
+9. [OpenCV](#opencv)
+10. [Yolov8](#yolov8)
 
-you re given with the caster wheel bot 
+# Introduction
+
+# Skid-Steer
+
+You're given with the caster wheel bot 
+
+![alt text][image1]
 
 So to convert it to skid steer 4-wheeled Diff-drive bot we need to give it 4 wheels, 2 on left and 2 on right. Currently we have 2 wheels attached but they are very near to centre as in caster wheel to give the base stability, but now we have four so we will keep them little away from centre.
-
-
 
 So lets replace caster wheel with the front left wheel first
 
@@ -149,6 +152,8 @@ Let's test the model in Rviz
 ros2 launch erc_gazebo_sensors check_urdf.launch.py
 ```
 
+![alt text][image2]
+
 Here u can see in Rviz the rear wheels are closer to the base centre, so just mirror the front wheels for both rear wheels
 
 Also add the joints inside Diff-drive plugin in erc_bot.gazebo such it looks:
@@ -214,6 +219,8 @@ Then launch our robot to gazebo arena
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
+![alt text][image3]
+
 And move it using this teleop node
 
 ```bash
@@ -261,10 +268,11 @@ ros2 run trajectory_server trajectory_server
 
 Now move around using the keyboard teleop node or Gazebo teleop GUI and visualize the robot's path in green coloured trajectory
 
+![alt text][image4]
+
 # SENSORS
 
 # Camera
-
 
 To add a camera - and every other sensors later - we have to change 2 files:
 1) `erc_bot.urdf`: here define the position, orientation and other physical properties of the camera in this file. 
@@ -412,9 +420,13 @@ ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 
 Now you can see the image stream 
 
+![alt text][image5]
+
 If you cant see camera window at right bottom of Rviz, then goto Add --> by topic --> image
 
 You can also see the image renderings using `rqt` tool of ROS
+
+![alt text][image6]
 
 Just type `rqt` in another terminal, then goto plugins --> visualization --> image view 
 
@@ -473,6 +485,8 @@ launchDescriptionObject.add_action(gz_image_bridge_node)
 
 After rebuild we can try it using `rqt` and we will see huge improvement in the bandwith due to the `jpeg` compression.
 
+![alt text][image7]
+
 > If compressed images are not visible in rqt, you have to install the plugins you want to use:
 > - `sudo apt install ros-jazzy-compressed-image-transport`: for jpeg and png compression
 > - `sudo apt install ros-jazzy-theora-image-transport`: for theora compression
@@ -523,6 +537,7 @@ Rebuild the workspace and let's try it!
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
+![alt text][image8]
 
 RQT_RECONFIGURE
 
@@ -546,6 +561,8 @@ Terminal 2
 ```bash
 ros2 run rqt_reconfigure rqt_reconfigure
 ```
+
+![alt text][image9]
 
 We can play with the parameters here, change the compression or the algorithm as we wish and we can monitor it's impact with `rqt` on real-time.
 
@@ -578,6 +595,8 @@ To add an RGBD camera let's replace the conventional camera properties in `erc_b
 And let's forward 2 topics with the parameter_bridge:
 
 - /camera/depth_image which provides a grayscale camera stream where the grayscale values correspond to the distance of the individual pixels. RViz is able to render depth image topic and the color image topic together as a depth cloud.
+
+![alt text][image12]
 
 - /camera/points which is a 3D pointcloud, the same type as the 3D lidar's point cloud. We can visualize it in RViz just as any point clouds.
 
@@ -612,14 +631,22 @@ Rebuild the workspace and let's start the simulation:
 ros2 launch bme_gazebo_sensors spawn_robot.launch.py
 ```
 
+![alt text][image10]
+
 But we encounter a issue here as the orientation of 3D point cloud isn't correct because it's interpreted in the camera_link_optical frame, let's change it with `       <optical_frame_id>camera_link</optical_frame_id>`
+
+![alt text][image11]
 
 Here we can get a basic mapping of the environment by increasing the decay time under 
 `Pointcloud2 camera` option, set it to around 30 seconds and move around to build the map
 
-LIDAR
+![alt text][image18]
+
+#Lidar
 
 Similar to the camera we create Lidar and add real sensor properties to it
+
+# 2D lidar
 
 First, we'll start with a simple 2D lidar, let's add it to the `erc_bot.urdf`:
 
@@ -726,11 +753,19 @@ Let's try it in the simulation!
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
-WE can see the scan_link tf frame and red laserscan points in Rviz
+![alt text][image13]
+
+We can see the red laserscan points in Rviz
 
 Also verify the rendering of lidars in Gazebo, as we set it to `true` in the gazebo plugin file, with the `Visualize Lidar` tool:
 
+![alt text][image14]
+
 Here also we can get a simple mapping of the surroundings by increasing the decay time 
+
+![alt text][image15]
+
+# 3D lidar
 
 If we want to simulate a 3D lidar we only have to add vertical samples together with the minimum and maximum angles.
 
@@ -777,7 +812,11 @@ Launch the bot again:
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
+![alt text][image16]
+
 We can get 3D mapping of the surrounding here by increasing the decay time similarly we did for the RGBD-Camera and 2D lidar
+
+![alt text][image17]
 
 IMU
 
@@ -861,6 +900,8 @@ rqt
 Then goto Plugins --> Topics --> Topic Monitor 
 
 Check on IMU and move the bot to see the changing IMU data of angular velocity, linear acceleration and orientation.
+
+![alt text][image20]
 
 SENSOR FUSION 
 
@@ -1056,6 +1097,8 @@ Rebuild the workspace and let's try it out!
 ros2 launch bme_gazebo_sensors spawn_robot.launch.py
 ```
 
+![alt text][image19]
+
 We can see that the yellow (raw) odometry starts drifting away from the corrected one very quickly and we can easily bring the robot into a special situation if we drive on a curve and hit the wall.In this case the robot is unable to move and the wheels are slipping. The raw odometry believes from the encoder signals that the robot is still moving on a curve while the odometry after the ekf sensor fusion will believe that the robot moves forward straight. Although none of them are correct, but remember, neither the IMU and neither the odometry can tell if the robot is doing an uniform movement or it's stand still. At least the ekf is able to properly tell that the robot's orientation is not changing regardless what the encoders measure.
 
 PERCEPTION
@@ -1223,6 +1266,8 @@ In another terminal sourcing your workspace, run
 ros2 run erc_gazebo_sensors_py chase_the_ball
 ```
 
+![alt text][image21]
+
 You can see the live camera feeds displayed through openCV window.
 
 Now we'll process it with a new function `process_image` and create three more windows which will show the `binary - mask, object outlined - contour and tracking view - crosshair`, before that we need to do some more changes in our `__init__()` function and add some more functions:
@@ -1366,7 +1411,11 @@ Finally create the `process_image` function after `display_image`
 
 This time the node will open 4 OpenCV windows and try to find the red ball on the image. Let's add a red ball to the simulation first using the Resource Spawner plugin of Gazebo:
 
+![alt text][image22]
+
 Then let's see the new windows of our node:
+
+![alt text][image23]
 
 Handling many OpenCV windows can be uncomfortable, so before we start following the ball, let's overlay the output of the three image processing windows on the camera frame:
 

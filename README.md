@@ -4,7 +4,7 @@ you re given with the caster wheel bot
 
 So to convert it to skid steer 4-wheeled Diff-drive bot we need to give it 4 wheels, 2 on left and 2 on right. Currently we have 2 wheels attached but they are very near to centre as in caster wheel to give the base stability, but now we have four so we will keep them little away from centre.
 
-![caster_wheel_bot_image][]
+
 
 So lets replace caster wheel with the front left wheel first
 
@@ -48,7 +48,7 @@ Delete this section in erc_bot.urdf to remove the caster wheel from robot model
 Lets add front left wheel first
 
 Attach the Wheel to robot's base
-
+```xml
   <joint type="continuous" name="front_left_wheel_joint">
     <origin xyz="0.15 0.15 0" rpy="0 0 0"/>
     <child link="front_left_wheel"/>
@@ -57,9 +57,10 @@ Attach the Wheel to robot's base
     <limit effort="100" velocity="10"/>
     <dynamics damping="1.0" friction="1.0"/>
   </joint>
+```
 
 Define mass and inertial properties
-
+```xml
   <link name='front_left_wheel'>
     <inertial>
       <mass value="5.0"/>
@@ -70,18 +71,19 @@ Define mass and inertial properties
           izz="0.025"
       />
     </inertial>
+```
 
 define collision model
-
+```xml
     <collision>
       <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/> 
       <geometry>
         <cylinder radius=".1" length=".05"/>
       </geometry>
     </collision>
-
+```
 define visual mode l
-
+```xml
    <visual name='front_left_wheel_visual'>
       <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
       <geometry>
@@ -90,16 +92,72 @@ define visual mode l
        <material name="green"/>
     </visual>
   </link>
-
+```
 Just do the same for right wheel but dont forget to change the origin for right wheel(HINT:It should be opposite to front left wheel, so you need to change one coordinate of right wheel in origin tags)
 
-Here u can see in the urdf the rear wheels are closer to the base centre, so just mirror the front wheels for both rear wheels
+Let's test the model in Rviz
+```bash
+ros2 launch erc_gazebo_sensors check_urdf.launch.py
+```
+
+Here u can see in Rviz the rear wheels are closer to the base centre, so just mirror the front wheels for both rear wheels
+
+Also add the joints inside Diff-drive plugin in erc_bot.gazebo such it looks:
+```xml
+<?xml version="1.0"?>
+<robot>
+  <gazebo>
+    <plugin
+        filename="gz-sim-diff-drive-system"
+        name="gz::sim::systems::DiffDrive">
+        <!-- Topic for the command input -->
+        <topic>/cmd_vel</topic>
+
+        <!-- Wheel joints -->
+        <left_joint>rear_left_wheel_joint</left_joint>
+        <right_joint>rear_right_wheel_joint</right_joint>
+        <left_joint>front_left_wheel_joint</left_joint>
+        <right_joint>front_right_wheel_joint</right_joint>
+
+        <!-- Wheel parameters -->
+        <wheel_separation>0.3</wheel_separation>
+        <wheel_radius>0.1</wheel_radius> 
+
+        <!-- Control gains and limits (optional) -->
+        <max_velocity>3.0</max_velocity> 
+        <max_linear_acceleration>1</max_linear_acceleration>
+        <min_linear_acceleration>-1</min_linear_acceleration>
+        <max_angular_acceleration>2</max_angular_acceleration>
+        <min_angular_acceleration>-2</min_angular_acceleration>
+        <max_linear_velocity>0.5</max_linear_velocity>
+        <min_linear_velocity>-0.5</min_linear_velocity>
+        <max_angular_velocity>1</max_angular_velocity>
+        <min_angular_velocity>-1</min_angular_velocity>
+        
+        <!-- Other parameters (optional) -->
+        <odom_topic>odom</odom_topic> 
+        <tf_topic>tf</tf_topic>
+        <frame_id>odom</frame_id>
+        <child_frame_id>base_footprint</child_frame_id>
+        <odom_publish_frequency>30</odom_publish_frequency>
+    </plugin>
+
+    <plugin
+        filename="gz-sim-joint-state-publisher-system"
+        name="gz::sim::systems::JointStatePublisher">
+        <topic>joint_states</topic>
+        <joint_name>rear_left_wheel_joint</joint_name>
+        <joint_name>rear_right_wheel_joint</joint_name>
+        <joint_name>front_left_wheel_joint</joint_name>
+        <joint_name>front_right_wheel_joint</joint_name>
+
+    </plugin>
+  </gazebo>
+  
+</robot>
+```
 
 Then build your workspace and source it 
-
-Finally launch the model in Rviz
-
-ros2 launch erc_gazebo_sensors check_urdf.launch.py
 
 Then launch our robot to gazebo arena
 
@@ -118,7 +176,7 @@ You can also test your bot motion directly from the gazebo teleop GUI --> goto t
 FRICTION
 
 For all 4-wheels
-
+```xml
   <gazebo reference="front_left_wheel">
     <mu1>1.5</mu1>
     <mu2>0.7</mu2>
@@ -128,14 +186,14 @@ For all 4-wheels
     <maxVel>0.3</maxVel>
     <fdir1>0 1 0</fdir1>
   </gazebo>
-
+```
 For base link
-
+```xml
     <gazebo reference="base_link">
     <mu1>0.000002</mu1>
     <mu2>0.000002</mu2>
   </gazebo>
-
+```
 ODOMETRY
 
 Lets view our robots trajectory
@@ -165,16 +223,16 @@ To add a camera - and every other sensors later - we have to change 2 files:
 Let's add the camera first to the `erc_bot.urdf`:
 
 Attach the camera to front of robot's base 
-
+```xml
   <joint type="fixed" name="camera_joint">
     <origin xyz="0.225 0 0.075" rpy="0 0 0"/>
     <child link="camera_link"/>
     <parent link="base_link"/>
     <axis xyz="0 1 0" />
   </joint>
-
+```
 Define mass and inertial properties
-
+```xml
   <link name='camera_link'>
     <pose>0 0 0 0 0 0</pose>
     <inertial>
@@ -186,18 +244,20 @@ Define mass and inertial properties
           izz="1e-6"
       />
     </inertial>
+```
 
 Add collision model for physical interactions(Here camera model is definded as a 3cm cube box)
-
+```xml
     <collision name='collision'>
       <origin xyz="0 0 0" rpy="0 0 0"/> 
       <geometry>
         <box size=".03 .03 .03"/>
       </geometry>
     </collision>
+```
 
 Add visual model to give visual features of 3cm cube box to our simulated camera
-
+```xml
     <visual name='camera_link_visual'>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -205,15 +265,17 @@ Add visual model to give visual features of 3cm cube box to our simulated camera
       </geometry>
     </visual>
   </link>
+```
 
 Add gazebo colour to our camera
-
+```xml
   <gazebo reference="camera_link">
     <material>Gazebo/Red</material>
   </gazebo>
+```
 
-here we need to define one more link `camera_link_optical` because normal ros robot coordinate frames are different from what computer vision algorithms expects, so our camera link species where its mounted on the robot body and camera_link_optical tells how the camera sees the world
-
+Here we need to define one more link `camera_link_optical` because normal ros robot coordinate frames are different from what computer vision algorithms expects, so our camera link species where its mounted on the robot body and camera_link_optical tells how the camera sees the world
+```xml
   <joint type="fixed" name="camera_optical_joint">
     <origin xyz="0 0 0" rpy="-1.5707 0 -1.5707"/>
     <child link="camera_link_optical"/>
@@ -222,9 +284,9 @@ here we need to define one more link `camera_link_optical` because normal ros ro
 
   <link name="camera_link_optical">
   </link>
-
+```
 Now let's add the simulated camera properties into `erc_bot.gazebo`:
-
+```xml
   <gazebo reference="camera_link">
     <sensor name="camera" type="camera">
       <camera>
@@ -255,7 +317,7 @@ Now let's add the simulated camera properties into `erc_bot.gazebo`:
       <topic>camera/image</topic>
     </sensor>
   </gazebo>
-
+```
 Aslo remember to keep this code snippet between the `<robot>` tags!
 
 With the above plugin we define a couple of things for Gazebo, let's see the important ones one by one:
@@ -440,7 +502,7 @@ We can play with the parameters here, change the compression or the algorithm as
 RGBD-CAMERA
 
 To add an RGBD camera let's replace the conventional camera properties in `erc_bot.gazebo` with this one:
-
+```xml
   <gazebo reference="camera_link">
     <sensor name="rgbd_camera" type="rgbd_camera">
       <camera>
@@ -462,7 +524,7 @@ To add an RGBD camera let's replace the conventional camera properties in `erc_b
       <gz_frame_id>camera_link</gz_frame_id>
     </sensor>
   </gazebo>
-
+```
 And let's forward 2 topics with the parameter_bridge:
 
 - /camera/depth_image which provides a grayscale camera stream where the grayscale values correspond to the distance of the individual pixels. RViz is able to render depth image topic and the color image topic together as a depth cloud.
@@ -532,14 +594,14 @@ First, we'll start with a simple 2D lidar, let's add it to the `erc_bot.urdf`:
     <collision name='collision'>
       <origin xyz="0 0 0" rpy="0 0 0"/> 
       <geometry>
-        <box size=".1 .1 .1"/>
+        <box size=".06 .06 .06"/>
       </geometry>
     </collision>
 
     <visual name='scan_link_visual'>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename = "package://erc_gazebo_sensors/meshes/lidar.dae"/>
+       <box size=".06 .06 .06"/>
       </geometry>
     </visual>
   </link>
@@ -698,12 +760,12 @@ Which is a simple link and a fixed joint in the center of the base link. Let's a
 With adding the IMU we aren't done yet, with the new Gazebo we also have to make sure that our simulated world has the right plugins within its `<world>` tag
 
 So add this IMU plugin in the `home.sdf` world
-
+```xml
     <plugin
       filename="gz-sim-imu-system"
       name="gz::sim::systems::Imu">
     </plugin>
-
+```
 Before we try it out we also have to bridge the topics from Gazebo towards ROS using the parameter_bridge. Let's add the `imu` topic - or what we defined as `<topic>` in the Gazebo plugin - to the parameter bridge, rebuild the workspace and we are ready to test it!
 
 ```python
@@ -767,7 +829,7 @@ Navigate to the package and run:
 mkdir config
 ```
 Don't forget to add it to `CMakeLists.txt`
-```bash
+```txt
 cmake_minimum_required(VERSION 3.8)
 project(erc_gazebo_sensors)
 
@@ -816,9 +878,56 @@ sudo apt install ros-jazzy-robot-localization
 ```
 
 Now add this code to the `ekf.yaml` config file
+```yaml
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true
+    publish_acceleration: false
+    publish_tf: true
 
 
-Here encounter a issue about publishing out `tf` data, since earlier gz_bridge_node was doing this but we want ekf_filter_node to do that, so we'll comment the `tf` bridge 
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    odom0: odom
+    odom0_config: [false, false, false,
+                  false, false, false,
+                  true, true, false,
+                  false, false, true,
+                  false, false, false]
+
+    imu0: imu
+    imu0_config: [false, false, false,
+                  true, true, true,
+                  false, false, false,
+                  false, false, true,
+                  true, false, false]
+
+    imu0_differential: false
+
+    process_noise_covariance: [0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.03, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.03, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.025, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.025, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.04, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015]
+
+    initial_estimate_covariance: [1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9]
+```
+
+Here encounter a issue about publishing out `tf` data, since earlier `gz_bridge_node` was doing this but we want ekf_filter_node to publish filtered `tf` data, so we'll comment the `tf` bridge 
 
 ```python
     # Node to bridge /cmd_vel and /odom
@@ -846,7 +955,7 @@ Here encounter a issue about publishing out `tf` data, since earlier gz_bridge_n
     )
 ```
 
-And then let's add the `robot_localization` and `trajectory_server` to the launch file:
+And then let's add the `robot_localization` and `trajectory_server`for both `odom` and `/odometry/filtered` to the launch file:
 
 ```python
     ekf_node = Node(
@@ -855,11 +964,12 @@ And then let's add the `robot_localization` and `trajectory_server` to the launc
         name='ekf_filter_node',
         output='screen',
         parameters=[
-            os.path.join(pkg_bme_gazebo_sensors, 'config', 'ekf.yaml'),
+            os.path.join(pkg_erc_gazebo_sensors, 'config', 'ekf.yaml'),
             {'use_sim_time': LaunchConfiguration('use_sim_time')},
              ]
     )
 ```
+
 ```python
     trajectory_odom_topic_node = Node(
         package='trajectory_server',
@@ -870,11 +980,25 @@ And then let's add the `robot_localization` and `trajectory_server` to the launc
     )
 ```
 
-And of course, add the new nodea to the `launchDescription` :
-```bash
+```python
+    trajectory_filtered_topic_node = Node(
+    package='trajectory_server',
+    executable='trajectory_server',
+    name='trajectory_server_filtered',
+    parameters=[
+        {'trajectory_topic': 'trajectory'},
+        {'odometry_topic': '/odometry/filtered'}
+    ]
+)
+```
+
+And of course, add the new nodes to the `launchDescription` :
+```python
 launchDescriptionObject.add_action(ekf_node)
 
 launchDescriptionObject.add_action(trajectory_odom_topic_node)
+
+launchDescriptionObject.add_action(trajectory_filtered_topic_node)
 ```
 
 Rebuild the workspace and let's try it out!
@@ -1288,4 +1412,201 @@ Before we proceed, we have to install the `ultralytics` package
 
 Here's the complete code of `yolo_detection_node`(refer recording or slides for reference)
 ```python
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
+import cv2
+import numpy as np
+import threading
+import time
+
+from ultralytics import YOLO
+
+
+class YoloDetectorNode(Node):
+
+    def __init__(self):
+        super().__init__('yolo_detector')
+
+        # Better model than yolov8n
+        self.model = YOLO("yolov8s.pt")
+
+        self.get_logger().info("YOLO model loaded")
+
+        self.subscription = self.create_subscription(
+            Image,
+            'camera/image',
+            self.image_callback,
+            1
+        )
+
+        self.bridge = CvBridge()
+
+        self.latest_frame = None
+        self.frame_lock = threading.Lock()
+
+        self.running = True
+
+        self.spin_thread = threading.Thread(
+            target=self.spin_thread_func,
+            daemon=True
+        )
+        self.spin_thread.start()
+
+        self.prev_time = time.time()
+
+    def spin_thread_func(self):
+
+        while rclpy.ok() and self.running:
+            rclpy.spin_once(self, timeout_sec=0.05)
+
+    def image_callback(self, msg):
+
+        frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+
+        with self.frame_lock:
+            self.latest_frame = frame
+
+    def stop(self):
+
+        self.running = False
+
+        if self.spin_thread.is_alive():
+            self.spin_thread.join(timeout=1)
+
+    def display_image(self):
+
+        cv2.namedWindow(
+            "YOLO Detection",
+            cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO
+        )
+
+        cv2.resizeWindow("YOLO Detection", 1600, 900)
+
+        while rclpy.ok() and self.running:
+
+            with self.frame_lock:
+                frame = None if self.latest_frame is None else self.latest_frame.copy()
+
+            if frame is not None:
+
+                result = self.run_yolo(frame)
+
+                cv2.imshow("YOLO Detection", result)
+
+            key = cv2.waitKey(1) & 0xFF
+
+            if key == ord('q') or key == 27:
+                self.running = False
+                break
+
+        cv2.destroyAllWindows()
+
+    def run_yolo(self, frame):
+
+        CONF_THRESHOLD = 0.35
+        results = self.model(
+            frame,
+            conf=CONF_THRESHOLD,
+            imgsz=640,
+            verbose=False
+        )
+
+        detections = []
+        for result in results:
+            for box in result.boxes:
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                class_id = int(box.cls[0])
+                confidence = float(box.conf[0])
+                class_name = self.model.names[class_id]
+                detections.append(
+                    f"{class_name} ({confidence:.2f})"
+                )
+                color = self.class_color(class_id)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2
+                )
+                label = f"{class_name} {confidence:.2f}"
+
+                (tw, th), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2
+                )
+                text_y = max(y1 - 10, th + 10)
+
+                cv2.rectangle(frame, (x1, text_y - th - baseline), (x1 + tw + 10, text_y + baseline), color, -1
+                )
+                cv2.putText(frame, label, (x1 + 5, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2
+                )
+                cx = (x1 + x2) // 2
+                cy = (y1 + y2) // 2
+                cv2.circle(frame, (cx, cy), 5, color, -1
+                )
+                
+        current_time = time.time()
+        fps = 1.0 / max(current_time - self.prev_time, 1e-6)
+        self.prev_time = current_time
+        dashboard_width = 350
+        dashboard = np.zeros(
+            (frame.shape[0], dashboard_width, 3),
+            dtype=np.uint8
+        )
+
+        cv2.putText(
+            dashboard, "Detections", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 255), 2
+        )
+
+        cv2.putText(dashboard,f"FPS : {fps:.1f}", (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2
+        )
+
+        cv2.putText(dashboard, f"Objects : {len(detections)}", (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2
+        )
+
+        y = 170
+
+        for det in detections[:25]:
+
+            cv2.putText(dashboard, det, (20, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1
+            )
+
+            y += 30
+
+        combined = np.hstack((frame, dashboard))
+
+        return combined
+
+    def class_color(self, class_id):
+
+        np.random.seed(class_id)
+
+        return tuple(
+            int(c)
+            for c in np.random.randint(100, 255, 3)
+        )
+
+
+def main(args=None):
+
+    print("OpenCV Version:", cv2.__version__)
+
+    rclpy.init(args=args)
+
+    node = YoloDetectorNode()
+
+    try:
+        node.display_image()
+
+    except KeyboardInterrupt:
+        pass
+
+    finally:
+
+        node.stop()
+
+        node.destroy_node()
+
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
 ```

@@ -28,7 +28,7 @@
 [image26]: ./assets/yolo2.png "Red ball in Gazebo"
 [image27]: ./assets/opencv.png "Red ball in Gazebo"
 
-# Session 3 : Sensors and Perception Guide
+# Session 4 : Sensors and Perception Guide
 
 A robot without sensors is like a human with their eyes closed.
 

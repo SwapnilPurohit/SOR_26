@@ -21,7 +21,6 @@ setup(
     entry_points={
         'console_scripts': [
             'trajectory_server = trajectory_server.trajectory_topic_based:main',
-            'trajectory_server_topic_based = trajectory_server.trajectory_topic_based:main'
         ],
     },
 )

@@ -74,7 +74,7 @@ Clone the starter branch into your ROS 2 workspace:
 git clone -b initial https://github.com/sachinmandal3580-rgb/sensors_and_perception.git
 ```
 
-After downloading the package, rebuild your workspace and source it so ROS 2 can discover the newly added packages:
+After downloading the package,move the gazebo models folder to your home directory, then rebuild your workspace and source it so ROS 2 can discover the newly added packages:
 
 ```bash
 colcon build

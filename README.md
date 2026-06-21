@@ -28,9 +28,20 @@
 [image26]: ./assets/yolo2.png "Red ball in Gazebo"
 [image27]: ./assets/opencv.png "Red ball in Gazebo"
 
-# ROS 2 + Gazebo Robot Simulation Guide
+# Session 3 : Sensors and Perception Guide
 
-A hands-on walkthrough for building a skid-steer robot in Gazebo, adding sensors (camera, RGBD, lidar, IMU), fusing odometry with an EKF, and adding perception with OpenCV and YOLOv8.
+A robot without sensors is like a human with their eyes closed.
+
+It can move.
+It can turn.
+But it has no idea what's happening around it.
+
+In this session, we'll give our robot the ability to see, measure, and understand its surroundings.
+
+Starting from a basic skid-steer robot, we'll add cameras, RGBD sensing, lidar, and an IMU, learn how robots estimate their position using sensor fusion, and finally build vision applications using OpenCV and YOLOv8.
+
+Welcome to the world of robot perception.
+
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -51,13 +62,42 @@ A hands-on walkthrough for building a skid-steer robot in Gazebo, adding sensors
    - [OpenCV](#opencv)
    - [YOLOv8](#yolov8)
 
----
+# Introduction
 
-## Introduction
+## Getting Started
 
-This guide takes a basic caster-wheel robot and progressively upgrades it: converting it to a 4-wheel skid-steer drive, tracking its odometry, attaching a full sensor suite (camera, RGBD camera, 2D/3D lidar, IMU), fusing sensor data for more accurate localization, and finally adding computer-vision-based perception (ball chasing with OpenCV, object detection with YOLOv8).
+The starting package for this session is very similar to where we left off in the previous lesson. However, every session comes with its own starter package containing the required files and project structure.
 
----
+Clone the starter branch into your ROS 2 workspace:
+
+```bash
+git clone -b initial https://github.com/sachinmandal3580-rgb/sensors_and_perception.git
+```
+
+After downloading the package, rebuild your workspace and source it so ROS 2 can discover the newly added packages:
+
+```bash
+colcon build
+source install/setup.bash
+```
+
+### Test the Starter Package
+
+Before adding sensors and perception capabilities, let's verify that everything works correctly.
+
+Launch the robot simulation:
+
+```bash
+ros2 launch erc_gazebo_sensors spawn_robot.launch.py
+```
+
+In a separate terminal, start keyboard teleoperation:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+If the robot spawns successfully and responds to your keyboard commands, you're ready to begin building its sensing and perception stack.
 
 ## Skid-Steer
 
@@ -1673,8 +1713,26 @@ if __name__ == '__main__':
     main()
 ```
 
-Spawn different Gazebo models with the Resource Spawner and watch YOLOv8 detect them live (shown below for a fire hydrant and a person):
+Now add different Gazebo models with the Resource Spawner and watch YOLOv8 detect them live (shown below for a fire hydrant and a person):
 
 ![alt text][image25]
 
 ![alt text][image26]
+
+# Conclusion
+
+A robot's journey toward autonomy begins with perception.
+
+Today, we gave our robot eyes through cameras, depth perception through RGBD sensing, environmental awareness through lidar, motion awareness through an IMU, and a more reliable estimate of reality through sensor fusion.
+
+We even taught it to recognize objects and react to what it sees.
+
+The robot can now observe the world.
+
+The next challenge is helping it understand where it is within that world and how to navigate through it.
+
+Because seeing is only the first step.
+
+Knowing where you are is what truly unlocks autonomy.
+
+## Till then Stay Tuned ! 

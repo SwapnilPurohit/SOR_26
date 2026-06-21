@@ -101,6 +101,8 @@ If the robot spawns successfully and responds to your keyboard commands, you're 
 
 ## Skid-Steer
 
+> **In short:** Skid-steer is the drive system used by tank-like robots. Wheels on the same side always spin together, and the robot turns by spinning the left and right sides at different speeds (or opposite directions for a sharp turn) — there's no separate steering mechanism. Here we convert the starter robot from a wobbly single caster-wheel design into a stable 4-wheel skid-steer robot.
+
 **Goal:** Convert the starter caster-wheel robot into a 4-wheel skid-steer differential-drive robot.
 
 You're given with the caster wheel bot:
@@ -284,6 +286,8 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 ## Friction
 
+> **In short:** Friction settings control how much the wheels grip the floor versus slide. Get this wrong and the robot either won't move (too much friction/resistance) or slides around unrealistically (too little) — tuning it makes the simulated physics behave like a real robot.
+
 Friction parameters control how the wheels grip the ground and how the base slides.
 
 For all 4 wheels:
@@ -311,6 +315,8 @@ For the base link:
 
 ## Odometry
 
+> **In short:** Odometry estimates the robot's position and path over time by tracking wheel rotations. It's useful but drifts with error (e.g. wheel slip), which is why later we fuse it with IMU data via the EKF.
+
 Let's view the robot's trajectory using the `trajectory_server` package.
 
 **Terminal 1:**
@@ -331,12 +337,16 @@ Move around with teleop and watch the path drawn in green:
 
 ## Sensors
 
+> **In short:** This section covers how to add the four core sensor types — camera, RGBD camera, lidar, and IMU — to a simulated robot. Every sensor needs two pieces: a URDF entry (where it's mounted) and a Gazebo plugin entry (how it behaves/what it publishes).
+
 To add any sensor — camera, lidar, IMU, etc. — two files need to be edited:
 
 1. **`erc_bot.urdf`** — defines the sensor's position, orientation, and physical (link/joint) properties.
 2. **`erc_bot.gazebo`** — defines the simulated sensor's real-world behavior (resolution, FOV, noise, etc.).
 
 ### Camera
+
+> **In short:** Adds a basic RGB camera to the robot so it can "see" in color. We also bridge the image stream from Gazebo into ROS, and compress it (JPEG) so it doesn't hog bandwidth — important for wireless robots.
 
 Attach the camera to the front of the robot's base:
 ```xml
@@ -488,6 +498,8 @@ Type `rqt` in a terminal → Plugins → Visualization → Image View (refresh i
 
 #### Image Transport
 
+> **In short:** Raw uncompressed video is too heavy for wireless robots (~20 MB/s). This subsection compresses the camera stream to JPEG using `image_bridge`, then fixes the resulting RViz `camera_info` topic-mismatch warning with a relay node.
+
 Both `/camera/camera_info` and `/camera/image` are now forwarded, but raw, uncompressed video at 640x480 consumes ~20 MB/s — too much for a wireless mobile robot. ROS's image transport plugins can compress the stream automatically, but this doesn't work with `parameter_bridge`. Instead, we use the dedicated `image_bridge` node from `ros_gz_image`.
 
 Comment out the raw image topic in `gz_bridge_node` (we'll forward only the compressed image separately):
@@ -586,6 +598,8 @@ ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 
 #### rqt_reconfigure
 
+> **In short:** `rqt_reconfigure` is a GUI tool that lets you tweak sensor/node parameters (like JPEG quality) live, instead of editing code and rebuilding every time.
+
 We set the JPEG quality manually via:
 ```python
 'camera.image.compressed.jpeg_quality': 75
@@ -607,6 +621,8 @@ ros2 run rqt_reconfigure rqt_reconfigure
 Adjust compression settings or algorithms here and monitor their effect live in `rqt`.
 
 ### RGBD Camera
+
+> **In short:** An RGBD camera adds a depth (distance) channel on top of regular color, like a Kinect. It gives the robot both "what does this look like" and "how far away is it," letting it generate 3D point clouds and depth maps of its surroundings.
 
 An RGBD camera adds depth perception on top of color. Replace the camera sensor definition in `erc_bot.gazebo` with:
 ```xml
@@ -681,9 +697,13 @@ For a basic environment map, increase the **decay time** under the `Pointcloud2 
 
 ### Lidar
 
+> **In short:** Lidar sends out laser beams and measures how long they take to bounce back, building a map of distances around the robot. 2D lidar scans a flat ring (used for basic obstacle avoidance/mapping); 3D lidar adds vertical scan layers for a full 3D point cloud of the environment.
+
 Like the camera, lidar requires a URDF link/joint plus a Gazebo sensor plugin.
 
 #### 2D Lidar
+
+> **In short:** Scans 360° around the robot on a single horizontal plane, producing a `LaserScan` — great for cheap, fast obstacle detection and basic 2D mapping.
 
 Add the link/joint to `erc_bot.urdf`:
 ```xml
@@ -798,6 +818,8 @@ Increase decay time here too for a simple map of the surroundings:
 
 #### 3D Lidar
 
+> **In short:** Same idea as 2D lidar, but adds multiple vertical scan layers (a `<vertical>` block with samples/angle range), producing a full 3D point cloud instead of a flat scan — useful for 3D obstacle/terrain mapping.
+
 To simulate a 3D lidar, add vertical samples (with min/max angles) alongside the horizontal scan parameters in `erc_bot.gazebo`:
 
 ```xml
@@ -846,6 +868,8 @@ Increase decay time for a 3D map of the surroundings (same approach as the RGBD 
 ![alt text][image17]
 
 ### IMU
+
+> **In short:** An IMU measures the robot's own motion — acceleration, rotation rate, and sometimes heading — without looking at the outside world at all. It's the robot's "inner ear," and it's especially useful for sensing things wheels can't, like slipping or tipping.
 
 An Inertial Measurement Unit (IMU) typically combines a 3-axis accelerometer, 3-axis gyroscope, and sometimes a 3-axis magnetometer — measuring linear acceleration, angular velocity, and (optionally) magnetic heading.
 
@@ -925,6 +949,8 @@ Go to Plugins → Topics → Topic Monitor, check IMU, and move the bot to watch
 ![alt text][image20]
 
 #### Sensor Fusion with EKF
+
+> **In short:** No single sensor is perfectly reliable — wheel odometry drifts (e.g. wheel slip), IMU drifts too. The Extended Kalman Filter (EKF) blends multiple noisy sensor readings (odometry + IMU) into one smarter, more accurate position estimate. This is "sensor fusion."
 
 **Sensor fusion** combines data from multiple sensors to get a more accurate, complete picture than any single sensor alone.
 
@@ -1120,7 +1146,11 @@ ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 
 ## Perception
 
+> **In short:** Perception is about making sense of sensor data — not just collecting it. Here we use vision algorithms (OpenCV, YOLOv8) to turn raw camera pixels into useful understanding: "where's the ball?" or "what objects are in this scene?"
+
 ### OpenCV
+
+> **In short:** OpenCV is a classic computer-vision library. Here it's used for color-based detection: isolate red pixels, find the largest red blob (the ball), compute its center, and steer the robot toward it — a simple but effective "ball-chasing" behavior using thresholding and contour detection.
 
 [OpenCV](https://opencv.org/) is an open-source computer vision library with hundreds of ready-to-use algorithms. Here we use it to make the robot chase a red ball.
 
@@ -1502,6 +1532,8 @@ The robot now follows the red ball in the Gazebo simulation:
 
 ### YOLOv8
 
+> **In short:** YOLOv8 ("You Only Look Once") is a deep-learning object detector that recognizes many different object classes (people, fire hydrants, etc.) in real time, drawing boxes and confidence scores around them — far more general than the color-based OpenCV approach above, since it understands actual object shapes/features instead of just color.
+
 [YOLOv8](https://github.com/ultralytics/ultralytics) brings real-time, multi-class object detection on top of the camera feed.
 
 **Step 1 — Create the node** `yolo_detection_node.py` in `erc_gazebo_sensors_py` (same way as `chase_the_ball.py`), and register it in `setup.py`.
@@ -1735,4 +1767,4 @@ Because seeing is only the first step.
 
 Knowing where you are is what truly unlocks autonomy.
 
-## Till then Stay Tuned ! 
+## Till then Stay Tuned !

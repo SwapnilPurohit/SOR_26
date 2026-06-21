@@ -26,6 +26,7 @@
 [image24]: ./assets/opencv4.png "Depth image"
 [image25]: ./assets/yolo1.png "OpenCV"
 [image26]: ./assets/yolo2.png "Red ball in Gazebo"
+[image27]: ./assets/opencv.png "Red ball in Gazebo"
 
 # Table of Contents
 1. [Introduction](#introduction)  
@@ -36,17 +37,17 @@
 4. [Odometry](#odometry)
 5. [Sensors](#sensors)
 6. [Camera](#camera)  
-2.1. [Image transport](#image-transport)  
-2.2. [rqt reconfigure](#rqt-reconfigure)
-2.3. [RGBD camera](#rgbd-camera)  
+6.1. [Image transport](#image-transport)  
+6.2. [rqt_reconfigure](#rqt_reconfigure)
+6.3. [RGBD camera](#rgbd-camera)  
 7. [Lidar](#lidar)
-3.1. [2D lidar](#2d-lidar)
-3.1. [3D lidar](#3d-lidar) 
+7.1. [2D lidar](#2d-lidar)
+7.1. [3D lidar](#3d-lidar) 
 8. [IMU](#imu)  
-4.1. [Sensor fusion with ekf](#sensor-fusion-with-ekf)
-5. [Perception](#perception)
-9. [OpenCV](#opencv)
-10. [Yolov8](#yolov8)
+8.1. [Sensor fusion with ekf](#sensor-fusion-with-ekf)
+9. [Perception](#perception)
+10. [openCV](#opencv)
+11. [Yolov8](#yolov8)
 
 # Introduction
 
@@ -229,7 +230,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 You can also test your bot motion directly from the gazebo teleop GUI --> goto the three dotted menu --> type teleop --> specify wheels speed and yaw then move around 
 
-FRICTION
+# Friction
 
 For all 4-wheels
 ```xml
@@ -250,7 +251,7 @@ For base link
     <mu2>0.000002</mu2>
   </gazebo>
 ```
-ODOMETRY
+# odometry
 
 Lets view our robots trajectory
 
@@ -270,7 +271,7 @@ Now move around using the keyboard teleop node or Gazebo teleop GUI and visualiz
 
 ![alt text][image4]
 
-# SENSORS
+# Sensors
 
 # Camera
 
@@ -432,7 +433,7 @@ Just type `rqt` in another terminal, then goto plugins --> visualization --> ima
 
 Refresh if you cant see 
 
-IMAGE TRANSPORT
+## Image Transport
 
 We can see that both `/camera/camera_info` and `/camera/image` topics are forwarded. Although this is still not the ideal way to forward the camera image from Gazebo. ROS has a very handy feature with it's image transport protocol plugins, it's able to automatically compress the video stream in the background without any additional work on our side. But this feature doesn't work together with `parameter_bridge`. Without compression the 640x480 camera stream consumes almost 20 MB/s network bandwidth which is unacceptable for a wireless mobile robot.
 
@@ -539,7 +540,7 @@ ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 ![alt text][image8]
 
-RQT_RECONFIGURE
+## rqt_reconfigure
 
 We already set up the `jpeg` quality in the `image_bridge` node with the following parameter:
 ```python
@@ -566,7 +567,7 @@ ros2 run rqt_reconfigure rqt_reconfigure
 
 We can play with the parameters here, change the compression or the algorithm as we wish and we can monitor it's impact with `rqt` on real-time.
 
-RGBD-CAMERA
+# RGBD camera
 
 To add an RGBD camera let's replace the conventional camera properties in `erc_bot.gazebo` with this one:
 ```xml
@@ -642,7 +643,7 @@ Here we can get a basic mapping of the environment by increasing the decay time 
 
 ![alt text][image18]
 
-#Lidar
+# Lidar
 
 Similar to the camera we create Lidar and add real sensor properties to it
 
@@ -818,7 +819,7 @@ We can get 3D mapping of the surrounding here by increasing the decay time simil
 
 ![alt text][image17]
 
-IMU
+# IMU
 
 An Inertial Measurement Unit (IMU) typically consists of a 3-axis accelerometer, 3-axis gyroscope, and sometimes a 3-axis magnetometer. It measures linear acceleration, angular velocity, and possibly magnetic heading (orientation)
 
@@ -903,7 +904,7 @@ Check on IMU and move the bot to see the changing IMU data of angular velocity, 
 
 ![alt text][image20]
 
-SENSOR FUSION 
+## Sensor fusion with ekf 
 
 Sensor fusion is the process of combining data from multiple sensors (possibly of different types) to obtain a more accurate or more complete understanding of a system or environment than could be achieved by using the sensors separately.
 
@@ -1101,9 +1102,9 @@ ros2 launch bme_gazebo_sensors spawn_robot.launch.py
 
 We can see that the yellow (raw) odometry starts drifting away from the corrected one very quickly and we can easily bring the robot into a special situation if we drive on a curve and hit the wall.In this case the robot is unable to move and the wheels are slipping. The raw odometry believes from the encoder signals that the robot is still moving on a curve while the odometry after the ekf sensor fusion will believe that the robot moves forward straight. Although none of them are correct, but remember, neither the IMU and neither the odometry can tell if the robot is doing an uniform movement or it's stand still. At least the ekf is able to properly tell that the robot's orientation is not changing regardless what the encoders measure.
 
-PERCEPTION
+# Perception
 
-OPENCV
+# openCV
 
 OpenCV (Open-Source Computer Vision Library) is an open-source library that includes several hundreds of computer vision algorithms. It helps us in performing various operations on images very easily.
 
@@ -1266,7 +1267,7 @@ In another terminal sourcing your workspace, run
 ros2 run erc_gazebo_sensors_py chase_the_ball
 ```
 
-![alt text][image21]
+![alt text][image27]
 
 You can see the live camera feeds displayed through openCV window.
 
@@ -1411,11 +1412,11 @@ Finally create the `process_image` function after `display_image`
 
 This time the node will open 4 OpenCV windows and try to find the red ball on the image. Let's add a red ball to the simulation first using the Resource Spawner plugin of Gazebo:
 
-![alt text][image22]
+![alt text][image21]
 
 Then let's see the new windows of our node:
 
-![alt text][image23]
+![alt text][image22]
 
 Handling many OpenCV windows can be uncomfortable, so before we start following the ball, let's overlay the output of the three image processing windows on the camera frame:
 
@@ -1501,7 +1502,9 @@ Add this to process_image function just before the `return`:
 ```
 And now the robot is able to follow the red ball in the Gazebo simulation:
 
-YOLOv8
+![alt text][image24]
+
+# YOLOv8
 
 In this section we'll dive into real-time object detection in ROS
 
@@ -1709,3 +1712,9 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 ```
+
+Now add different gazebo models using the resource spawner and you can see the yolo detections then(Here I've shown for a fire hydrant and a person)
+
+![alt text][image25]
+
+![alt text][image26]

@@ -263,7 +263,8 @@ Now move around using the keyboard teleop node or Gazebo teleop GUI and visualiz
 
 SENSORS
 
-CAMERA
+Camera
+
 
 To add a camera - and every other sensors later - we have to change 2 files:
 1) `erc_bot.urdf`: here define the position, orientation and other physical properties of the camera in this file. 

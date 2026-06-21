@@ -5,7 +5,7 @@
 [image3]: ./assets/skid3.png "Adding a camera"
 [image4]: ./assets/odom1.jpg "Adding a camera"
 [image5]: ./assets/camera1.png "Adding a camera"
-[image6]: ./assets/cam_rqr.png "rqt reconfigure"
+[image6]: ./assets/cam_rqt.png "rqt reconfigure"
 [image7]: ./assets/compressed_rqt.png "Wide angle camera"
 [image8]: ./assets/relay_node_compressed.png "Wide angle camera"
 [image9]: ./assets/rqt_reconfigure.png "IMU"
@@ -28,40 +28,50 @@
 [image26]: ./assets/yolo2.png "Red ball in Gazebo"
 [image27]: ./assets/opencv.png "Red ball in Gazebo"
 
-# Table of Contents
-1. [Introduction](#introduction)  
-1.1. [Download ROS package](#download-ros-package)  
-1.2. [Test the starter package](#test-the-starter-package)
+# ROS 2 + Gazebo Robot Simulation Guide
+
+A hands-on walkthrough for building a skid-steer robot in Gazebo, adding sensors (camera, RGBD, lidar, IMU), fusing odometry with an EKF, and adding perception with OpenCV and YOLOv8.
+
+## Table of Contents
+1. [Introduction](#introduction)
 2. [Skid-Steer](#skid-steer)
 3. [Friction](#friction)
 4. [Odometry](#odometry)
 5. [Sensors](#sensors)
-6. [Camera](#camera)  
-6.1. [Image transport](#image-transport)  
-6.2. [rqt_reconfigure](#rqt_reconfigure)
-6.3. [RGBD camera](#rgbd-camera)  
-7. [Lidar](#lidar)
-7.1. [2D lidar](#2d-lidar)
-7.1. [3D lidar](#3d-lidar) 
-8. [IMU](#imu)  
-8.1. [Sensor fusion with ekf](#sensor-fusion-with-ekf)
-9. [Perception](#perception)
-10. [openCV](#opencv)
-11. [Yolov8](#yolov8)
+   - [Camera](#camera)
+     - [Image Transport](#image-transport)
+     - [rqt_reconfigure](#rqt_reconfigure)
+   - [RGBD Camera](#rgbd-camera)
+   - [Lidar](#lidar)
+     - [2D Lidar](#2d-lidar)
+     - [3D Lidar](#3d-lidar)
+   - [IMU](#imu)
+     - [Sensor Fusion with EKF](#sensor-fusion-with-ekf)
+6. [Perception](#perception)
+   - [OpenCV](#opencv)
+   - [YOLOv8](#yolov8)
 
-# Introduction
+---
 
-# Skid-Steer
+## Introduction
 
-You're given with the caster wheel bot 
+This guide takes a basic caster-wheel robot and progressively upgrades it: converting it to a 4-wheel skid-steer drive, tracking its odometry, attaching a full sensor suite (camera, RGBD camera, 2D/3D lidar, IMU), fusing sensor data for more accurate localization, and finally adding computer-vision-based perception (ball chasing with OpenCV, object detection with YOLOv8).
+
+---
+
+## Skid-Steer
+
+**Goal:** Convert the starter caster-wheel robot into a 4-wheel skid-steer differential-drive robot.
+
+You're given with the caster wheel bot:
 
 ![alt text][image1]
 
-So to convert it to skid steer 4-wheeled Diff-drive bot we need to give it 4 wheels, 2 on left and 2 on right. Currently we have 2 wheels attached but they are very near to centre as in caster wheel to give the base stability, but now we have four so we will keep them little away from centre.
+To convert it to a skid-steer 4-wheeled diff-drive bot, we need to give it 4 wheels — 2 on the left and 2 on the right. Currently there are 2 wheels placed close to the center (as with a caster wheel, for stability), but since we now have four wheels, we'll move them slightly away from center.
 
-So lets replace caster wheel with the front left wheel first
+First, let's replace the caster wheel with the front-left wheel.
 
-Delete this section in erc_bot.urdf to remove the caster wheel from robot model 
+**Step 1 — Remove the caster wheel** from `erc_bot.urdf`:
 
 ```xml
    <joint type="fixed" name="front_caster_wheel_joint">
@@ -98,9 +108,9 @@ Delete this section in erc_bot.urdf to remove the caster wheel from robot model
   </link>
 ```
 
-Lets add front left wheel first
+**Step 2 — Add the front-left wheel.**
 
-Attach the Wheel to robot's base
+Attach the wheel to the robot's base:
 ```xml
   <joint type="continuous" name="front_left_wheel_joint">
     <origin xyz="0.15 0.15 0" rpy="0 0 0"/>
@@ -112,7 +122,7 @@ Attach the Wheel to robot's base
   </joint>
 ```
 
-Define mass and inertial properties
+Define mass and inertial properties:
 ```xml
   <link name='front_left_wheel'>
     <inertial>
@@ -126,7 +136,7 @@ Define mass and inertial properties
     </inertial>
 ```
 
-define collision model
+Define the collision model:
 ```xml
     <collision>
       <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/> 
@@ -135,7 +145,8 @@ define collision model
       </geometry>
     </collision>
 ```
-define visual mode l
+
+Define the visual model:
 ```xml
    <visual name='front_left_wheel_visual'>
       <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
@@ -146,18 +157,20 @@ define visual mode l
     </visual>
   </link>
 ```
-Just do the same for right wheel but dont forget to change the origin for right wheel(HINT:It should be opposite to front left wheel, so you need to change one coordinate of right wheel in origin tags)
 
-Let's test the model in Rviz
+Do the same for the right wheel, but don't forget to change the origin (it should mirror the front-left wheel — only one coordinate needs to flip).
+
+**Step 3 — Test the model in RViz:**
 ```bash
 ros2 launch erc_gazebo_sensors check_urdf.launch.py
 ```
 
 ![alt text][image2]
 
-Here u can see in Rviz the rear wheels are closer to the base centre, so just mirror the front wheels for both rear wheels
+You'll notice the rear wheels are closer to the base center in RViz — mirror the front wheels for both rear wheels to fix this.
 
-Also add the joints inside Diff-drive plugin in erc_bot.gazebo such it looks:
+**Step 4 — Update the Diff-Drive plugin** in `erc_bot.gazebo` to include all four wheel joints:
+
 ```xml
 <?xml version="1.0"?>
 <robot>
@@ -212,9 +225,7 @@ Also add the joints inside Diff-drive plugin in erc_bot.gazebo such it looks:
 </robot>
 ```
 
-Then build your workspace and source it 
-
-Then launch our robot to gazebo arena
+**Step 5 — Build, source, and launch:**
 
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
@@ -222,17 +233,20 @@ ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 
 ![alt text][image3]
 
-And move it using this teleop node
-
+Drive it with teleop:
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-You can also test your bot motion directly from the gazebo teleop GUI --> goto the three dotted menu --> type teleop --> specify wheels speed and yaw then move around 
+> You can also test bot motion directly from the Gazebo teleop GUI: open the three-dot menu → type "teleop" → set wheel speed and yaw → move around.
 
-# Friction
+---
 
-For all 4-wheels
+## Friction
+
+Friction parameters control how the wheels grip the ground and how the base slides.
+
+For all 4 wheels:
 ```xml
   <gazebo reference="front_left_wheel">
     <mu1>1.5</mu1>
@@ -244,44 +258,47 @@ For all 4-wheels
     <fdir1>0 1 0</fdir1>
   </gazebo>
 ```
-For base link
+
+For the base link:
 ```xml
     <gazebo reference="base_link">
     <mu1>0.000002</mu1>
     <mu2>0.000002</mu2>
   </gazebo>
 ```
-# odometry
 
-Lets view our robots trajectory
+---
 
-Check the trajcetory package inside the workspace
+## Odometry
 
-In terminal 1
+Let's view the robot's trajectory using the `trajectory_server` package.
+
+**Terminal 1:**
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
-In terminal 2
+**Terminal 2:**
 ```bash
 ros2 run trajectory_server trajectory_server
 ```
 
-Now move around using the keyboard teleop node or Gazebo teleop GUI and visualize the robot's path in green coloured trajectory
+Move around with teleop and watch the path drawn in green:
 
 ![alt text][image4]
 
-# Sensors
+---
 
-# Camera
+## Sensors
 
-To add a camera - and every other sensors later - we have to change 2 files:
-1) `erc_bot.urdf`: here define the position, orientation and other physical properties of the camera in this file. 
-2) The `erc_bot.gazebo`: Here we add real camera sensor properties like resolution, field of view, noise,etc. to our simulated camera 
+To add any sensor — camera, lidar, IMU, etc. — two files need to be edited:
 
-Let's add the camera first to the `erc_bot.urdf`:
+1. **`erc_bot.urdf`** — defines the sensor's position, orientation, and physical (link/joint) properties.
+2. **`erc_bot.gazebo`** — defines the simulated sensor's real-world behavior (resolution, FOV, noise, etc.).
 
-Attach the camera to front of robot's base 
+### Camera
+
+Attach the camera to the front of the robot's base:
 ```xml
   <joint type="fixed" name="camera_joint">
     <origin xyz="0.225 0 0.075" rpy="0 0 0"/>
@@ -290,7 +307,8 @@ Attach the camera to front of robot's base
     <axis xyz="0 1 0" />
   </joint>
 ```
-Define mass and inertial properties
+
+Define mass and inertial properties:
 ```xml
   <link name='camera_link'>
     <pose>0 0 0 0 0 0</pose>
@@ -305,7 +323,7 @@ Define mass and inertial properties
     </inertial>
 ```
 
-Add collision model for physical interactions(Here camera model is definded as a 3cm cube box)
+Add a collision model (a 3 cm cube box):
 ```xml
     <collision name='collision'>
       <origin xyz="0 0 0" rpy="0 0 0"/> 
@@ -315,7 +333,7 @@ Add collision model for physical interactions(Here camera model is definded as a
     </collision>
 ```
 
-Add visual model to give visual features of 3cm cube box to our simulated camera
+Add a visual model:
 ```xml
     <visual name='camera_link_visual'>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -326,14 +344,15 @@ Add visual model to give visual features of 3cm cube box to our simulated camera
   </link>
 ```
 
-Add gazebo colour to our camera
+Give the camera a Gazebo color:
 ```xml
   <gazebo reference="camera_link">
     <material>Gazebo/Red</material>
   </gazebo>
 ```
 
-Here we need to define one more link `camera_link_optical` because normal ros robot coordinate frames are different from what computer vision algorithms expects, so our camera link species where its mounted on the robot body and camera_link_optical tells how the camera sees the world
+ROS robot coordinate frames differ from what computer-vision algorithms expect, so we define a second link, `camera_link_optical`: `camera_link` says where the camera is mounted, `camera_link_optical` says how the camera sees the world.
+
 ```xml
   <joint type="fixed" name="camera_optical_joint">
     <origin xyz="0 0 0" rpy="-1.5707 0 -1.5707"/>
@@ -344,7 +363,8 @@ Here we need to define one more link `camera_link_optical` because normal ros ro
   <link name="camera_link_optical">
   </link>
 ```
-Now let's add the simulated camera properties into `erc_bot.gazebo`:
+
+Now add the simulated camera sensor properties to `erc_bot.gazebo`:
 ```xml
   <gazebo reference="camera_link">
     <sensor name="camera" type="camera">
@@ -377,21 +397,17 @@ Now let's add the simulated camera properties into `erc_bot.gazebo`:
     </sensor>
   </gazebo>
 ```
-Aslo remember to keep this code snippet between the `<robot>` tags!
+> Keep this snippet between the `<robot>` tags.
 
-With the above plugin we define a couple of things for Gazebo, let's see the important ones one by one:
-- `<gazebo reference="camera_link">`, we have to refer to the `camera_link` that we defined in the `urdf`
-- `<horizontal_fov>1.3962634</horizontal_fov>`, the field of view of the simulated camera
-- `width`, `height`, `format` and `update_rate`, properties of the video stream
-- `<optical_frame_id>camera_link_optical</optical_frame_id>`, we have to use the `camera_link_optical` that we checked in details above to ensure the right static transformations between the coordinate systems
-- `<camera_info_topic>camera/camera_info</camera_info_topic>`, certain tools like rviz requires a `camera_info` topic that describes the physical properties of the camera. The topic's name must match camera's topic (in this case both are `camera/...`)
-- `<topic>camera/image</topic>`, we define the camera topic here
+**Key parameters explained:**
+- `<gazebo reference="camera_link">` — refers to the `camera_link` defined in the URDF
+- `<horizontal_fov>` — field of view of the simulated camera
+- `width`, `height`, `format`, `update_rate` — video stream properties
+- `<optical_frame_id>` — ensures correct static transforms between coordinate systems (must be `camera_link_optical`)
+- `<camera_info_topic>` — required by tools like RViz; must share the same prefix as the image topic
+- `<topic>` — the camera's image topic name
 
-We can now see the camera model and two different tf frames on it but yet we can't see the image stream, because gazebo is publishing them but ros cant receive since both are different softwares, so we have to bridge them.
-
-For this we have gz_brige_node in spawn_robot.launch.py file. You can check here about the kind of topic types forwaded between ROS and Gazebo.
-
-Lets extend the arguments in gz_bridge_node to forward two more image topics
+Gazebo publishes the camera feed, but ROS can't read it directly — the two need to be **bridged**. This is handled by `gz_bridge_node` in `spawn_robot.launch.py`. Let's extend it to forward the image topics:
 
 ```python
     # Node to bridge /cmd_vel and /odom
@@ -414,34 +430,27 @@ Lets extend the arguments in gz_bridge_node to forward two more image topics
         ]
     )
 ```
-Lets rebuild the workspace and launch the robot
+
+Rebuild and launch:
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
-Now you can see the image stream 
-
 ![alt text][image5]
 
-If you cant see camera window at right bottom of Rviz, then goto Add --> by topic --> image
+> If you don't see the camera window in RViz, go to Add → By topic → image.
 
-You can also see the image renderings using `rqt` tool of ROS
+You can also view it via `rqt`:
 
 ![alt text][image6]
 
-Just type `rqt` in another terminal, then goto plugins --> visualization --> image view 
+Type `rqt` in a terminal → Plugins → Visualization → Image View (refresh if needed).
 
-Refresh if you cant see 
+#### Image Transport
 
-## Image Transport
+Both `/camera/camera_info` and `/camera/image` are now forwarded, but raw, uncompressed video at 640x480 consumes ~20 MB/s — too much for a wireless mobile robot. ROS's image transport plugins can compress the stream automatically, but this doesn't work with `parameter_bridge`. Instead, we use the dedicated `image_bridge` node from `ros_gz_image`.
 
-We can see that both `/camera/camera_info` and `/camera/image` topics are forwarded. Although this is still not the ideal way to forward the camera image from Gazebo. ROS has a very handy feature with it's image transport protocol plugins, it's able to automatically compress the video stream in the background without any additional work on our side. But this feature doesn't work together with `parameter_bridge`. Without compression the 640x480 camera stream consumes almost 20 MB/s network bandwidth which is unacceptable for a wireless mobile robot.
-
-Therefore there is a dedicated `image_bridge` node in the `ros_gz_image` package. Let's modify our launch file:
-
-Comment the camera_image topic from gz_bridge_node
-because we'll use a separate node to forward the compressed image only
-
+Comment out the raw image topic in `gz_bridge_node` (we'll forward only the compressed image separately):
 ```python
     # Node to bridge /cmd_vel and /odom
     gz_bridge_node = Node(
@@ -478,39 +487,35 @@ because we'll use a separate node to forward the compressed image only
     )
 ```
 
-Dont forget to add the new node to the `launchDescription`:
-
+Add the new node to the launch description:
 ```python
 launchDescriptionObject.add_action(gz_image_bridge_node)
 ```
 
-After rebuild we can try it using `rqt` and we will see huge improvement in the bandwith due to the `jpeg` compression.
+After rebuilding, `rqt` shows a big bandwidth improvement thanks to JPEG compression:
 
 ![alt text][image7]
 
-> If compressed images are not visible in rqt, you have to install the plugins you want to use:
-> - `sudo apt install ros-jazzy-compressed-image-transport`: for jpeg and png compression
-> - `sudo apt install ros-jazzy-theora-image-transport`: for theora compression
-> - `sudo apt install ros-jazzy-zstd-image-transport`: for zstd compression
+> If compressed images aren't visible in `rqt`, install the relevant transport plugin(s):
+> - `sudo apt install ros-jazzy-compressed-image-transport` — JPEG / PNG
+> - `sudo apt install ros-jazzy-theora-image-transport` — Theora
+> - `sudo apt install ros-jazzy-zstd-image-transport` — Zstd
 
-But we face another issue, this time in RViz, the uncompressed camera stream is visible as before but the compressed one isn't due to the following warning:
-
+There's still an issue: RViz shows a warning for the compressed stream:
 ```
 Camera Info
 Expecting Camera Info on topic [/camera/image/camera_info]. No CameraInfo received. Topic may not exist.
 ```
 
-It's because RViz always expect the `image` and `the camera_info` topics with the same prefix which works well for:
+RViz always expects `image` and `camera_info` topics to share the same prefix. This works for:
 
-`/camera/image` &#8594; `/camera/camera_info`
+`/camera/image` → `/camera/camera_info`
 
-But doesn't work for:
+but not for:
 
-`/camera/image/compressed` &#8594; `/camera/image/camera_info`
+`/camera/image/compressed` → `/camera/image/camera_info`
 
-Because we don't publish the `camera_info` to that topic. We could remap the `camera_info` to that topic, but then the uncompressed image won't work in RViz, so it's not the desired solution.
-
-But there is another useful tool that we can use, the `relay` node from the `topic_tools` package:
+because `camera_info` isn't published under that prefix. Remapping it directly would break the uncompressed stream, so instead we use the `relay` node from the `topic_tools` package to republish it:
 
 ```python
     # Relay node to republish /camera/camera_info to /camera/image/camera_info
@@ -526,50 +531,44 @@ But there is another useful tool that we can use, the `relay` node from the `top
     )
 ```
 
-Of course, don't forget to add it to the `launchDescription` too:
+Add it to the launch description:
 ```python
 launchDescriptionObject.add_action(relay_camera_info_node)
 ```
 
-> If `topic_tools` is not installed you can install it with `sudo apt install ros-jazzy-topic-tools`
+> If `topic_tools` isn't installed: `sudo apt install ros-jazzy-topic-tools`
 
-Rebuild the workspace and let's try it!
-
+Rebuild and test:
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 ![alt text][image8]
 
-## rqt_reconfigure
+#### rqt_reconfigure
 
-We already set up the `jpeg` quality in the `image_bridge` node with the following parameter:
+We set the JPEG quality manually via:
 ```python
 'camera.image.compressed.jpeg_quality': 75
 ```
+To discover other available parameters interactively, use `rqt_reconfigure`.
 
-But how do we know what is the name of the parameter and what other settings do we can change? To see that we will use the `rqt_reconfigure` node.
-
-First start the simulation:
-
-Terminal1
+**Terminal 1:**
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
-Then start rqt_reconfigure:
-
-Terminal 2
+**Terminal 2:**
 ```bash
 ros2 run rqt_reconfigure rqt_reconfigure
 ```
 
 ![alt text][image9]
 
-We can play with the parameters here, change the compression or the algorithm as we wish and we can monitor it's impact with `rqt` on real-time.
+Adjust compression settings or algorithms here and monitor their effect live in `rqt`.
 
-# RGBD camera
+### RGBD Camera
 
-To add an RGBD camera let's replace the conventional camera properties in `erc_bot.gazebo` with this one:
+An RGBD camera adds depth perception on top of color. Replace the camera sensor definition in `erc_bot.gazebo` with:
 ```xml
   <gazebo reference="camera_link">
     <sensor name="rgbd_camera" type="rgbd_camera">
@@ -593,15 +592,14 @@ To add an RGBD camera let's replace the conventional camera properties in `erc_b
     </sensor>
   </gazebo>
 ```
-And let's forward 2 topics with the parameter_bridge:
 
-- /camera/depth_image which provides a grayscale camera stream where the grayscale values correspond to the distance of the individual pixels. RViz is able to render depth image topic and the color image topic together as a depth cloud.
+Two extra topics need forwarding:
+
+- **`/camera/depth_image`** — a grayscale stream where pixel value = distance. RViz can render this together with the color image as a depth cloud.
 
 ![alt text][image12]
 
-- /camera/points which is a 3D pointcloud, the same type as the 3D lidar's point cloud. We can visualize it in RViz just as any point clouds.
-
-Let's add the topics to the parameter bridge:
+- **`/camera/points`** — a 3D point cloud (same type as the 3D lidar's cloud), visualized like any other point cloud.
 
 ```python
     # Node to bridge /cmd_vel and /odom
@@ -626,31 +624,28 @@ Let's add the topics to the parameter bridge:
     )
 ```
 
-Rebuild the workspace and let's start the simulation:
-
+Rebuild and launch:
 ```bash
-ros2 launch bme_gazebo_sensors spawn_robot.launch.py
+ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
 ![alt text][image10]
 
-But we encounter a issue here as the orientation of 3D point cloud isn't correct because it's interpreted in the camera_link_optical frame, let's change it with `       <optical_frame_id>camera_link</optical_frame_id>`
+The point cloud's orientation may look wrong because it's interpreted in the `camera_link_optical` frame — fix by changing it to: `<optical_frame_id>camera_link</optical_frame_id>`
 
 ![alt text][image11]
 
-Here we can get a basic mapping of the environment by increasing the decay time under 
-`Pointcloud2 camera` option, set it to around 30 seconds and move around to build the map
+For a basic environment map, increase the **decay time** under the `Pointcloud2 camera` display option (~30 seconds) and move around:
 
 ![alt text][image18]
 
-# Lidar
+### Lidar
 
-Similar to the camera we create Lidar and add real sensor properties to it
+Like the camera, lidar requires a URDF link/joint plus a Gazebo sensor plugin.
 
-# 2D lidar
+#### 2D Lidar
 
-First, we'll start with a simple 2D lidar, let's add it to the `erc_bot.urdf`:
-
+Add the link/joint to `erc_bot.urdf`:
 ```xml
   <joint type="fixed" name="scan_joint">
     <origin xyz="0.0 0 0.15" rpy="0 0 0"/>
@@ -685,8 +680,7 @@ First, we'll start with a simple 2D lidar, let's add it to the `erc_bot.urdf`:
   </link>
 ```
 
-Then add the plugin to the `erc_bot.gazebo` file:
-
+Add the sensor plugin to `erc_bot.gazebo`:
 ```xml
   <gazebo reference="scan_link">
     <sensor name="gpu_lidar" type="gpu_lidar">
@@ -722,8 +716,7 @@ Then add the plugin to the `erc_bot.gazebo` file:
   </gazebo>
 ```
 
-Before we can test our lidar we have to update the `parameter_bridge` to forward the lidar scan topic from gazebo to ROS:
-
+Update `parameter_bridge` to forward the scan topic:
 ```python
     # Node to bridge /cmd_vel and /odom
     gz_bridge_node = Node(
@@ -748,31 +741,25 @@ Before we can test our lidar we have to update the `parameter_bridge` to forward
     )
 ```
 
-Let's try it in the simulation!
-
+Test it:
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
 ![alt text][image13]
 
-We can see the red laserscan points in Rviz
-
-Also verify the rendering of lidars in Gazebo, as we set it to `true` in the gazebo plugin file, with the `Visualize Lidar` tool:
+The red laser-scan points appear in RViz. You can also verify rendering inside Gazebo (since `visualize` is `true`) with the **Visualize Lidar** tool:
 
 ![alt text][image14]
 
-Here also we can get a simple mapping of the surroundings by increasing the decay time 
+Increase decay time here too for a simple map of the surroundings:
 
 ![alt text][image15]
 
-# 3D lidar
+#### 3D Lidar
 
-If we want to simulate a 3D lidar we only have to add vertical samples together with the minimum and maximum angles.
+To simulate a 3D lidar, add vertical samples (with min/max angles) alongside the horizontal scan parameters in `erc_bot.gazebo`:
 
-So, let's modify the  erc_bot.gazebo to add vertical samples as well
-
-Add this block after the horizontal scan parameters:
 ```xml
           <vertical>
               <samples>32</samples>
@@ -781,8 +768,7 @@ Add this block after the horizontal scan parameters:
           </vertical>
 ```
 
-To properly visualize a 3D point cloud in RViz we have to forward one more topic with parameter_bridge:
-
+Forward one more topic for the 3D point cloud:
 ```python
     # Node to bridge /cmd_vel and /odom
     gz_bridge_node = Node(
@@ -808,23 +794,23 @@ To properly visualize a 3D point cloud in RViz we have to forward one more topic
     )
 ```
 
-Launch the bot again:
+Launch:
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
 ![alt text][image16]
 
-We can get 3D mapping of the surrounding here by increasing the decay time similarly we did for the RGBD-Camera and 2D lidar
+Increase decay time for a 3D map of the surroundings (same approach as the RGBD camera and 2D lidar):
 
 ![alt text][image17]
 
-# IMU
+### IMU
 
-An Inertial Measurement Unit (IMU) typically consists of a 3-axis accelerometer, 3-axis gyroscope, and sometimes a 3-axis magnetometer. It measures linear acceleration, angular velocity, and possibly magnetic heading (orientation)
+An Inertial Measurement Unit (IMU) typically combines a 3-axis accelerometer, 3-axis gyroscope, and sometimes a 3-axis magnetometer — measuring linear acceleration, angular velocity, and (optionally) magnetic heading.
 
-But first, let's add our IMU to the `urdf`:
-
+Add a simple link and fixed joint at the center of the base link, in the `urdf`:
+```xml
   <joint name="imu_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="base_link"/>
@@ -833,9 +819,10 @@ But first, let's add our IMU to the `urdf`:
 
   <link name="imu_link">
   </link>
+```
 
-Which is a simple link and a fixed joint in the center of the base link. Let's add the plugin to the `erc_bot.gazebo` file too:
-
+Add the sensor plugin in `erc_bot.gazebo`:
+```xml
   <gazebo reference="imu_link">
     <sensor name="imu" type="imu">
       <always_on>1</always_on>
@@ -846,18 +833,17 @@ Which is a simple link and a fixed joint in the center of the base link. Let's a
       <gz_frame_id>imu_link</gz_frame_id>
     </sensor>
   </gazebo>
+```
 
-With adding the IMU we aren't done yet, with the new Gazebo we also have to make sure that our simulated world has the right plugins within its `<world>` tag
-
-So add this IMU plugin in the `home.sdf` world
+The simulated world also needs the IMU system plugin. Add this inside the `<world>` tag of `home.sdf`:
 ```xml
     <plugin
       filename="gz-sim-imu-system"
       name="gz::sim::systems::Imu">
     </plugin>
 ```
-Before we try it out we also have to bridge the topics from Gazebo towards ROS using the parameter_bridge. Let's add the `imu` topic - or what we defined as `<topic>` in the Gazebo plugin - to the parameter bridge, rebuild the workspace and we are ready to test it!
 
+Bridge the `imu` topic, rebuild, and test:
 ```python
     # Node to bridge /cmd_vel and /odom
     gz_bridge_node = Node(
@@ -884,43 +870,32 @@ Before we try it out we also have to bridge the topics from Gazebo towards ROS u
     )
 ```
 
-First,  launch the bot:
-
-Terminal 1
+**Terminal 1:**
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
-Terminal 2
-
-Launch the bot again:
+**Terminal 2:**
 ```bash
 rqt
 ```
 
-Then goto Plugins --> Topics --> Topic Monitor 
-
-Check on IMU and move the bot to see the changing IMU data of angular velocity, linear acceleration and orientation.
+Go to Plugins → Topics → Topic Monitor, check IMU, and move the bot to watch angular velocity, linear acceleration, and orientation change in real time.
 
 ![alt text][image20]
 
-## Sensor fusion with ekf 
+#### Sensor Fusion with EKF
 
-Sensor fusion is the process of combining data from multiple sensors (possibly of different types) to obtain a more accurate or more complete understanding of a system or environment than could be achieved by using the sensors separately.
+**Sensor fusion** combines data from multiple sensors to get a more accurate, complete picture than any single sensor alone.
 
-A Kalman Filter (KF) is a mathematical algorithm that estimates the internal state of a system (e.g., position, velocity) based on noisy measurements and a predictive model of how the system behaves. The standard (linear) Kalman Filter assumes the system dynamics (state transitions) and measurement models are linear.
+A **Kalman Filter (KF)** estimates a system's internal state (position, velocity, etc.) from noisy measurements using a predictive model, assuming linear dynamics. Real-world systems — especially involving orientation or IMU/odometry/GPS fusion — are often non-linear. The **Extended Kalman Filter (EKF)** handles this by locally linearizing the non-linear models. (We'll cover EKF theory in depth during the localization session — here we just see the filtered odometry output.)
 
-Real-world systems—especially those involving orientation, rotations, or non-linear sensor models (e.g., fusing IMU acceleration, odometry, GPS position, magnetometer) often do not follow purely linear equations. That’s where the Extended Kalman Filter (EKF) comes in. It's a widely used sensor fusion algorithm that handles non-linear system and measurement models by locally linearizing them. 
-
-We'll learn ekf in depth during localization of our robot next session, but here we just see how the filtered odometry looks like.
-
-First create a config directory inside the erc_gazebo_sensors package
-
-Navigate to the package and run:
+**Step 1 — Create a config directory** inside `erc_gazebo_sensors`:
 ```bash
 mkdir config
 ```
-Don't forget to add it to `CMakeLists.txt`
+
+Add it to `CMakeLists.txt`:
 ```txt
 cmake_minimum_required(VERSION 3.8)
 project(erc_gazebo_sensors)
@@ -959,17 +934,17 @@ install(DIRECTORY
 ament_package()
 ```
 
-Then create `ekf.yaml` config file
+**Step 2 — Create `ekf.yaml`:**
 ```bash
 touch ekf.yaml
 ```
 
-Also we've to install the `robot-localization` package
+**Step 3 — Install `robot_localization`:**
 ```bash
 sudo apt install ros-jazzy-robot-localization
 ```
 
-Now add this code to the `ekf.yaml` config file
+**Step 4 — Configure the EKF** in `ekf.yaml`:
 ```yaml
 ekf_filter_node:
   ros__parameters:
@@ -1019,8 +994,7 @@ ekf_filter_node:
     initial_estimate_covariance: [1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9]
 ```
 
-Here encounter a issue about publishing out `tf` data, since earlier `gz_bridge_node` was doing this but we want ekf_filter_node to publish filtered `tf` data, so we'll comment the `tf` bridge 
-
+**Step 5 — Stop bridging raw `tf`**, since the EKF node will publish the filtered `tf` instead:
 ```python
     # Node to bridge /cmd_vel and /odom
     gz_bridge_node = Node(
@@ -1047,7 +1021,7 @@ Here encounter a issue about publishing out `tf` data, since earlier `gz_bridge_
     )
 ```
 
-And then let's add the `robot_localization` and `trajectory_server`for both `odom` and `/odometry/filtered` to the launch file:
+**Step 6 — Add the EKF node** and two trajectory servers (one for raw `odom`, one for `/odometry/filtered`):
 
 ```python
     ekf_node = Node(
@@ -1084,7 +1058,7 @@ And then let's add the `robot_localization` and `trajectory_server`for both `odo
 )
 ```
 
-And of course, add the new nodes to the `launchDescription` :
+Add all new nodes to the launch description:
 ```python
 launchDescriptionObject.add_action(ekf_node)
 
@@ -1093,40 +1067,36 @@ launchDescriptionObject.add_action(trajectory_odom_topic_node)
 launchDescriptionObject.add_action(trajectory_filtered_topic_node)
 ```
 
-Rebuild the workspace and let's try it out!
+Rebuild and run:
 ```bash
-ros2 launch bme_gazebo_sensors spawn_robot.launch.py
+ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
 
 ![alt text][image19]
 
-We can see that the yellow (raw) odometry starts drifting away from the corrected one very quickly and we can easily bring the robot into a special situation if we drive on a curve and hit the wall.In this case the robot is unable to move and the wheels are slipping. The raw odometry believes from the encoder signals that the robot is still moving on a curve while the odometry after the ekf sensor fusion will believe that the robot moves forward straight. Although none of them are correct, but remember, neither the IMU and neither the odometry can tell if the robot is doing an uniform movement or it's stand still. At least the ekf is able to properly tell that the robot's orientation is not changing regardless what the encoders measure.
+**What you'll observe:** The yellow (raw) odometry trajectory drifts away from the corrected one quickly, especially in tricky situations — e.g. driving on a curve and hitting a wall, causing wheel slip. The raw odometry (trusting wheel encoders) thinks the robot keeps turning; the EKF-fused odometry correctly infers the robot's orientation isn't actually changing, since neither sensor alone can distinguish "moving uniformly" from "stuck."
 
-# Perception
+---
 
-# openCV
+## Perception
 
-OpenCV (Open-Source Computer Vision Library) is an open-source library that includes several hundreds of computer vision algorithms. It helps us in performing various operations on images very easily.
+### OpenCV
 
-In this section we'll look into one of the widely used application of openCV in ROS
+[OpenCV](https://opencv.org/) is an open-source computer vision library with hundreds of ready-to-use algorithms. Here we use it to make the robot chase a red ball.
 
-We'll give our bot the intelligence to chase a red ball 
-
-First create another package to store our nodes
-
-Navigate to the src directory and run
+**Step 1 — Create a package** for the Python nodes:
 ```bash
 ros2 pkg create --build-type ament_python erc_gazebo_sensors_py
 ```
 
-Create a node inside the `eerc_gazebo_sensors_py` directory
+**Step 2 — Create the node:**
 ```bash
 touch chase_the_ball.py
 
 chmod +x chase_the_ball.py
 ```
 
-Don't forget to add this node to `setup.py`
+Register it in `setup.py`:
 ```bash
 entry_points={
      'console_scripts': [
@@ -1135,15 +1105,11 @@ entry_points={
  },
 ```
 
-Install the openCV package
-
-Execute
+**Step 3 — Install OpenCV:**
 ```bash
 pip --version
 ```
-Ensure that pip is configured with python3.xx . If not you may have to use (pip3 --version).
-
-Execute either
+Make sure `pip` is tied to your `python3.xx` (use `pip3` if needed).
 
 ```bash
 pip install opencv-contrib-python
@@ -1151,24 +1117,21 @@ pip install opencv-contrib-python
 pip install opencv-python
 ```
 
-Use pip3 in the above commands, if python3 is configured with one of them.
-
-To test the installation, type python3 in Terminal to start Python interactive session and type following codes there.
+Test the install:
 ```bash
+python3
+```
+```python
 import cv2 as cv
 print(cv.__version__)
 ```
 
-If you're encountering an issue with the cv2 (OpenCV) library and its interaction with the numpy library, then execute the following. We dont want the most recent version of numpy as it cannot interact with cv_bridge
-```bash
-pip install "numpy<2"
-```
+> If `cv2` conflicts with `numpy`, downgrade numpy (the newest version breaks `cv_bridge`):
+> ```bash
+> pip install "numpy<2"
+> ```
 
-If the results are printed out without any errors, congratulations!! You have installed OpenCV-Python successfully.
-
-Let's begin...
-
-First making the node which subscribes to /camera/image topic as that contains the camera feed. It then converts it to OpenCV compatible frame and displays it using OpenCV.
+**Step 4 — Build the base subscriber node.** It subscribes to `/camera/image`, converts to an OpenCV frame, and displays it:
 
 ```python
 import rclpy
@@ -1255,27 +1218,21 @@ if __name__ == '__main__':
     main()
 ```
 
-Build and source your workspace.
-
-Run
+Build, source, then run:
 ```bash
 ros2 launch erc_gazebo_sensors spawn_robot.launch.py
 ```
-
-In another terminal sourcing your workspace, run
 ```bash
 ros2 run erc_gazebo_sensors_py chase_the_ball
 ```
 
 ![alt text][image27]
 
-You can see the live camera feeds displayed through openCV window.
+You should see the live camera feed in an OpenCV window.
 
-Now we'll process it with a new function `process_image` and create three more windows which will show the `binary - mask, object outlined - contour and tracking view - crosshair`, before that we need to do some more changes in our `__init__()` function and add some more functions:
+**Step 5 — Process the image.** Next we add `process_image()` to produce three more views: a binary mask, an outlined contour, and a tracking crosshair. Since heavier processing could block the spin loop that feeds `image_callback()`, we move spinning to its own thread.
 
-Let's extend the node with better handling of the subscription to the image topic. If process_image() will take more time to run it will also block the execution of rclpy.spin_once(self, timeout_sec=0.05) that is needed to trigger the image_callback(). So let's move the spin functionality to a separate thread:
-
-Update the `__init__()` constructor first:
+Update `__init__()`:
 ```python
     def __init__(self):
         super().__init__('image_subscriber')
@@ -1305,7 +1262,7 @@ Update the `__init__()` constructor first:
         self.spin_thread.start()
 ```
 
-Then add the `spin_thread_func()` function and also implement a thread lock in `image_callback()`:
+Add `spin_thread_func()` and make `image_callback()` thread-safe:
 ```python
     def spin_thread_func(self):
         """Separate thread function for rclpy spinning."""
@@ -1319,9 +1276,9 @@ Then add the `spin_thread_func()` function and also implement a thread lock in `
             self.latest_frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 ```
 
-Obviously, we don't need rclpy.spin_once(self, timeout_sec=0.05) anymore within display_image()!
+`display_image()` no longer needs `rclpy.spin_once(self, timeout_sec=0.05)` directly.
 
-Let's add a stop() function, too, to join the therads when we stop the node:
+Add a `stop()` method to join the thread cleanly:
 ```python
     def stop(self):
         """Stop the node and the spin thread."""
@@ -1329,7 +1286,7 @@ Let's add a stop() function, too, to join the therads when we stop the node:
         self.spin_thread.join()
 ```
 
-And we'll call this stop() function when we stop the node in the main() function:
+Call it from `main()`:
 ```python
 def main(args=None):
     rclpy.init(args=args)
@@ -1345,7 +1302,7 @@ def main(args=None):
         rclpy.shutdown()
 ```
 
-Finally create the `process_image` function after `display_image`
+Now add `process_image()` (after `display_image`) — this detects the red ball via color thresholding and contour detection:
 ```python
     def process_image(self, img):
         """Image processing task."""
@@ -1410,17 +1367,17 @@ Finally create the `process_image` function after `display_image`
         return binary*255
 ```
 
-This time the node will open 4 OpenCV windows and try to find the red ball on the image. Let's add a red ball to the simulation first using the Resource Spawner plugin of Gazebo:
+This opens 4 OpenCV windows and tries to find the red ball. Spawn a red ball in the simulation using the Gazebo Resource Spawner plugin first:
 
 ![alt text][image21]
 
-Then let's see the new windows of our node:
+The new windows look like this:
 
 ![alt text][image22]
 
-Handling many OpenCV windows can be uncomfortable, so before we start following the ball, let's overlay the output of the three image processing windows on the camera frame:
+**Step 6 — Combine the views.** Managing 4 separate windows is awkward, so let's overlay the mask/contour/crosshair views onto the main camera frame.
 
-Define another function - `add_small_pictures`
+Add `add_small_pictures()`:
 ```python
     # Add small images to the top row of the main image
     def add_small_pictures(self, img, small_images, size=(160, 120)):
@@ -1443,7 +1400,7 @@ Define another function - `add_small_pictures`
         return img
 ```
 
-Then add this function in the `display_image`function and show only the `result` openCV window
+Use it in `display_image()` and show only the combined `result` window:
 ```python
     def display_image(self):
         """Main loop to process and display the latest frame."""
@@ -1475,9 +1432,7 @@ Then add this function in the `display_image`function and show only the `result`
         self.running = False
 ```
 
-Finally give the bot velocity command based on the position of the ball in the tracking window
-
-Add this to process_image function just before the `return`:
+**Step 7 — Drive toward the ball.** Add this to `process_image()`, just before the `return`:
 ```python
 ...
             # Chase the ball
@@ -1500,19 +1455,24 @@ Add this to process_image function just before the `return`:
         self.publisher.publish(msg)
 ...
 ```
-And now the robot is able to follow the red ball in the Gazebo simulation:
+
+The robot now follows the red ball in the Gazebo simulation:
 
 ![alt text][image24]
 
-# YOLOv8
+### YOLOv8
 
-In this section we'll dive into real-time object detection in ROS
+[YOLOv8](https://github.com/ultralytics/ultralytics) brings real-time, multi-class object detection on top of the camera feed.
 
-Let's create another node, `yolo_detection_node.py`in the erc_gazebo_sensors_py package just like the `chase_the_ball.py` node and add it to `setup.py` 
+**Step 1 — Create the node** `yolo_detection_node.py` in `erc_gazebo_sensors_py` (same way as `chase_the_ball.py`), and register it in `setup.py`.
 
-Before we proceed, we have to install the `ultralytics` package
+**Step 2 — Install Ultralytics:**
+```bash
+pip install ultralytics
+```
 
-Here's the complete code of `yolo_detection_node`(refer recording or slides for reference)
+**Step 3 — Full node code** (subscribes to the camera, runs YOLOv8s, draws bounding boxes/labels, and shows a live detection dashboard with FPS and object count):
+
 ```python
 import rclpy
 from rclpy.node import Node
@@ -1713,7 +1673,7 @@ if __name__ == '__main__':
     main()
 ```
 
-Now add different gazebo models using the resource spawner and you can see the yolo detections then(Here I've shown for a fire hydrant and a person)
+Spawn different Gazebo models with the Resource Spawner and watch YOLOv8 detect them live (shown below for a fire hydrant and a person):
 
 ![alt text][image25]
 

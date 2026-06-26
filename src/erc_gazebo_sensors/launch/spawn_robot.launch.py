@@ -11,8 +11,12 @@ def generate_launch_description():
 
     pkg_erc_gazebo_sensors = get_package_share_directory('erc_gazebo_sensors')
 
-    gazebo_models_path, ignore_last_dir = os.path.split(pkg_erc_gazebo_sensors)
-    os.environ["GZ_SIM_RESOURCE_PATH"] += os.pathsep + gazebo_models_path
+    gazebo_models_path = "/home/ubuntu/gazebo_models"
+    
+    if "GZ_SIM_RESOURCE_PATH" in os.environ:
+        os.environ["GZ_SIM_RESOURCE_PATH"] += os.pathsep + gazebo_models_path
+    else:
+        os.environ["GZ_SIM_RESOURCE_PATH"] = gazebo_models_path
 
     rviz_launch_arg = DeclareLaunchArgument(
         'rviz', default_value='true',
@@ -106,12 +110,67 @@ def generate_launch_description():
             "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
             "/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model",
             "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V",
+            "/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+            "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
+            "/scan/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+            "/imu@sensor_msgs/msg/Imu[gz.msgs.IMU"
         ],
+        output="screen",
+        remappings=[
+            ('/camera/camera_info', '/camera/image/camera_info')
+        ],
+        parameters=[
+            {'use_sim_time': LaunchConfiguration('use_sim_time')},
+        ]
+    )
+
+    image_bridge = Node(
+        package="ros_gz_image",
+        executable="image_bridge",
+        arguments=["/camera/image"],
         output="screen",
         parameters=[
             {'use_sim_time': LaunchConfiguration('use_sim_time')},
         ]
     )
+
+    # Temporarily bypassed topic_tools due to ros package server hang
+    # relay_camera_info_node = Node(
+    #     package='topic_tools',
+    #     executable='relay',
+    #     name='relay_camera_info',
+    #     output='screen',
+    #     arguments=['/camera/camera_info', '/camera/image/camera_info'],
+    #     parameters=[
+    #         {'use_sim_time': LaunchConfiguration('use_sim_time')},
+    #     ]
+    # )
+
+    # Temporarily bypassed ekf_node due to ros package server hang
+    # ekf_node = Node(
+    #     package='robot_localization',
+    #     executable='ekf_node',
+    #     name='ekf_filter_node',
+    #     output='screen',
+    #     parameters=[
+    #         os.path.join(pkg_erc_gazebo_sensors, 'config', 'ekf.yaml'),
+    #         {'use_sim_time': LaunchConfiguration('use_sim_time')}
+    #     ]
+    # )
+
+    trajectory_server_node = Node(
+        package='trajectory_server',
+        executable='trajectory_server',
+        name='trajectory_server',
+        output='screen',
+        parameters=[
+            {'use_sim_time': LaunchConfiguration('use_sim_time')},
+        ]
+    )
+
+
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -143,5 +202,9 @@ def generate_launch_description():
     launchDescriptionObject.add_action(spawn_urdf_node)
     launchDescriptionObject.add_action(gz_bridge_node)
     launchDescriptionObject.add_action(robot_state_publisher_node)
+    launchDescriptionObject.add_action(image_bridge)
+    # launchDescriptionObject.add_action(relay_camera_info_node)
+    # launchDescriptionObject.add_action(ekf_node)
+    launchDescriptionObject.add_action(trajectory_server_node)
 
     return launchDescriptionObject
